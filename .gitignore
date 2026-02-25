@@ -1,0 +1,17 @@
+# Dependencies
+/node_modules
+
+# Build output
+/dist
+
+/logs
+
+# Environment variables
+.env
+.env.production
+.env.developer
+# Logs
+*.log
+
+/tmp
+
