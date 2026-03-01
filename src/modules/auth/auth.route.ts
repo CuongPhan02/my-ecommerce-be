@@ -33,8 +33,7 @@ export const authRoutes = (fastify: FastifyInstance) => {
           email: { type: 'string', format: 'email' },
           password: { type: 'string', minLength: 8 },
           name: { type: 'string' },
-          phone: { type: 'string', nullable: true },
-          address: { type: 'string', nullable: true },
+          avatarUrl: { type: 'string', nullable: true },
           urlRedirect: { type: 'string', format: 'url', nullable: true },
         },
       },
@@ -62,7 +61,6 @@ export const authRoutes = (fastify: FastifyInstance) => {
         properties: {
           email: { type: 'string', format: 'email' },
           password: { type: 'string' },
-          isMobile: { type: 'boolean', nullable: true },
         },
       },
     },
@@ -231,14 +229,13 @@ export const authRoutes = (fastify: FastifyInstance) => {
     swaggerSchema: {
       tags: [AUTH_TAG],
       summary: 'Google Login',
-      description: 'Login with Google Authorization Code',
+      description: 'Login with Google ID Token',
       body: {
         type: 'object',
-        required: ['code'],
+        required: ['idToken'],
         properties: {
-          code: { type: 'string' },
+          idToken: { type: 'string' },
           urlRedirect: { type: 'string', format: 'url', nullable: true },
-          isMobile: { type: 'boolean', nullable: true },
         },
       },
     },

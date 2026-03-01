@@ -61,7 +61,6 @@ const envSchema = z.object({
   // --- Social Login ---
   GOOGLE_CLIENT_ID: z.string().min(1, 'Google Client ID is required'),
   GOOGLE_CLIENT_SECRET: z.string().min(1, 'Google Client Secret is required'),
-  GOOGLE_REDIRECT_URI: z.url('Google Redirect URI is required'),
 
   // --- Super Admin Seeding ---
   SUPER_ADMIN_EMAIL: z.email('Invalid super admin email address').optional(),
@@ -73,6 +72,12 @@ const envSchema = z.object({
     .string()
     .min(1, 'Super admin name is required')
     .optional(),
+
+  // --- Scalar API Key ---
+  SCALAR_API_KEY: z
+    .string()
+    .optional()
+    .transform((val) => val?.trim()),
 });
 
 // Parse and Validate

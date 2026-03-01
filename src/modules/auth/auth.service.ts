@@ -69,11 +69,13 @@ export class AuthService {
     );
 
     if (!isValid) {
-      throw new NotFoundError('Invalid email or password (Password not match)');
+      throw new UnauthorizedError(
+        'Invalid email or password (Password not match)'
+      );
     }
 
     if (!findUserByEmail.emailVerified) {
-      throw new NotFoundError('Email not verified');
+      throw new UnauthorizedError('Email not verified');
     }
 
     const accessToken = server.jwt.sign({
@@ -100,121 +102,61 @@ export class AuthService {
     };
   }
 
-  private async getOauthGoogleToken(code: string) {
-    const body = {
-      code,
-      client_id: ENV_CONFIG.GOOGLE_CLIENT_ID,
-      client_secret: ENV_CONFIG.GOOGLE_CLIENT_SECRET,
-      redirect_uri: ENV_CONFIG.GOOGLE_REDIRECT_URI,
-      grant_type: 'authorization_code',
-    };
-
-    const response = await fetch('https://oauth2.googleapis.com/token', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: new URLSearchParams(Object.entries(body)).toString(),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Google Token Exchange Error:', errorText);
-      throw new BadRequestError('Failed to exchange code for token');
-    }
-
-    const data = (await response.json()) as {
-      access_token: string;
-      id_token: string;
-    };
-    return data;
-  }
-
-  private async getGoogleUserInfo(accessToken: string) {
-    const response = await fetch(
-      `https://www.googleapis.com/oauth2/v1/userinfo?access_token=${accessToken}`,
-      {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      }
-    );
-
-    if (!response.ok) {
-      throw new BadRequestError('Failed to get user info from Google');
-    }
-
-    const data = (await response.json()) as {
-      id: string;
-      email: string;
-      verified_email: boolean;
-      name: string;
-      given_name: string;
-      family_name: string;
-      picture: string;
-    };
-    return data;
-  }
-
   async googleLogin(
     server: FastifyInstance,
-    code: string,
+    idToken: string,
     userAgent?: string,
     ip?: string
   ) {
-    // 1. Exchange code for tokens
-    const { access_token } = await this.getOauthGoogleToken(code);
+    // 1. Verify Google Token
+    const googleResponse = await fetch(
+      `https://oauth2.googleapis.com/tokeninfo?id_token=${idToken}`
+    );
 
-    // 2. Get User Info
-    const googleUser = await this.getGoogleUserInfo(access_token);
-
-    if (!googleUser.verified_email) {
-      throw new BadRequestError('Google email not verified');
+    if (!googleResponse.ok) {
+      throw new UnauthorizedError('Invalid Google Token');
     }
 
-    // 3. Find user by Google ID or Email
-    let user = await this.repo.findUserByGoogleId(googleUser.id);
-    let isNewUser = 0;
+    const googleUser = (await googleResponse.json()) as {
+      sub: string;
+      email: string;
+      name: string;
+      picture: string;
+      aud: string;
+    };
 
+    if (googleUser.aud !== ENV_CONFIG.GOOGLE_CLIENT_ID) {
+      throw new UnauthorizedError('Token is not for this application');
+    }
+
+    // 2. Find user by Google ID or Email
+    let user = await this.repo.findUserByGoogleId(googleUser.sub);
     if (!user) {
       user = await this.repo.findUserByEmail(googleUser.email);
       if (user) {
         // Link Google ID to existing user
-        await this.repo.updateUser({ ...user, googleId: googleUser.id });
+        await this.repo.updateUser({ ...user, googleId: googleUser.sub });
       } else {
         // Create new user
+        // Generate random password for google user
         const randomPassword = crypto.randomBytes(16).toString('hex');
-        const newUser = await this.repo.createUser({
+        user = (await this.repo.createUser({
           email: googleUser.email,
           name: googleUser.name,
           password: randomPassword,
-          googleId: googleUser.id,
-          emailVerified: true,
           avatarUrl: googleUser.picture,
-        });
+          googleId: googleUser.sub,
+          emailVerified: true, // Google emails are verified
+        })) as any; // Cast because transaction result might be array
+
         // Handle array return from transaction if createUser returns array
-        if (Array.isArray(newUser)) {
-          user = newUser[0];
-        } else {
-          user = newUser; // Assuming it returns a single user object if not array, need to verify repo return type.
-          // Based on previous code: user = (await this.repo.createUser(...)) as any;
-          // Let's stick to safe casting if needed or check array.
-          // The previous code had `user = user[0]` if array.
+        if (Array.isArray(user)) {
+          user = user[0];
         }
-        isNewUser = 1;
       }
     }
 
-    // Safety check if user is still null (shouldn't happen if createUser works)
-    if (!user) {
-      // Fallback or error, but let's assume it's set.
-      // Re-query if needed? No, createUser returns it.
-      // But types might be tricky.
-      // checking previous implementation, it casts to `any`.
-      // I'll assume `user` is populated.
-    }
-
-    // 4. Generate Tokens
+    // 3. Generate Tokens
     const accessToken = server.jwt.sign({
       id: user!.id,
       email: user!.email,
@@ -237,8 +179,6 @@ export class AuthService {
         role: user!.role,
         avatarUrl: user!.avatarUrl,
       },
-      newUser: isNewUser,
-      verify: user!.emailVerified,
     };
   }
 

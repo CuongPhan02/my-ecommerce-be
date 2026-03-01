@@ -53,13 +53,9 @@ export class AuthRepository {
   }
 
   async createUser(
-    data: RegisterInput & {
-      googleId?: string;
-      emailVerified?: boolean;
-      avatarUrl?: string;
-    }
+    data: RegisterInput & { googleId?: string; emailVerified?: boolean }
   ) {
-    const { email, password, name, phone } = data;
+    const { email, password, name, avatarUrl } = data;
 
     const hashedPassword = await hashPassword(password);
     const userId = createId();
@@ -77,12 +73,11 @@ export class AuthRepository {
           email,
           name,
           password: hashedPassword,
-          phone,
+          avatarUrl,
           emailVerified: data.emailVerified || false,
           verificationToken: createId(),
           verificationTokenExpires: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours
           googleId: data.googleId,
-          avatarUrl: data.avatarUrl,
         })
         .returning();
 
