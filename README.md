@@ -65,7 +65,7 @@ ecommerce-fashion-be/
 1.  **Clone the repository**
 
     ```bash
-    git clone https://github.com/CuongPhan02/my-ecommerce-be.git
+    git clone https://github.com/phongphanq089/ecommerce-fashion-be.git
     cd ecommerce-fashion-be
     ```
 
