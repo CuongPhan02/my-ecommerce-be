@@ -20,8 +20,9 @@ import {
   productVariants,
   productsToCollections,
   brands,
+  productAttributeOptions,
 } from '@/db/schema';
-import { ilike, and, gte, lte, desc, asc, exists } from 'drizzle-orm';
+import { ilike, and, or, isNull, gte, gt, lte, desc, asc, exists } from 'drizzle-orm';
 
 export interface GetProductsFilter {
   page: number;
@@ -32,6 +33,7 @@ export interface GetProductsFilter {
   maxPrice?: number | undefined;
   sort?: 'price_asc' | 'price_desc' | 'newest' | 'oldest' | undefined;
   brandId?: string;
+  isFlashSale?: boolean;
 }
 
 export class ProductRepository {
@@ -55,6 +57,12 @@ export class ProductRepository {
   async findCategoryBySlug(slug: string) {
     return this.db.query.categories.findFirst({
       where: eq(categories.slug, slug),
+    });
+  }
+
+  async findProductBySlug(slug: string) {
+    return this.db.query.products.findFirst({
+      where: eq(products.slug, slug),
     });
   }
 
@@ -143,7 +151,58 @@ export class ProductRepository {
           .onConflictDoNothing();
       }
 
-      // 3. Create Variants & Attributes
+      const productId = newProduct.id;
+      const { options } = data;
+
+      // 1.5. Create Product Options (If any)
+      if (options && options.length > 0) {
+        for (const option of options) {
+          // Find or create attribute
+          let attr = await tx.query.attributes.findFirst({
+            where: eq(attributes.name, option.name),
+          });
+
+          if (!attr) {
+            const [newAttr] = await tx
+              .insert(attributes)
+              .values({ name: option.name })
+              .returning();
+            attr = newAttr;
+          }
+
+          // Handle values
+          for (const valName of option.values) {
+            let val = await tx.query.attributeValues.findFirst({
+              where: and(
+                eq(attributeValues.attributeId, attr!.id),
+                eq(attributeValues.value, valName)
+              ),
+            });
+
+            if (!val) {
+              const [newVal] = await tx
+                .insert(attributeValues)
+                .values({
+                  attributeId: attr!.id,
+                  value: valName,
+                })
+                .returning();
+              val = newVal;
+            }
+
+            // Link to Product
+            await tx
+              .insert(productAttributeOptions)
+              .values({
+                productId,
+                attributeValueId: val!.id,
+              })
+              .onConflictDoNothing();
+          }
+        }
+      }
+
+      // 2. Create Variants
       if (variants && variants.length > 0) {
         for (const variant of variants) {
           // 3.1 Create Variant
@@ -218,21 +277,64 @@ export class ProductRepository {
         }
       }
 
-      return newProduct;
+      return await this.getProductById(newProduct.id);
     });
   }
 
-  async getAllProducts(filter: GetProductsFilter) {
+  private mapProductOptions(product: any) {
+    if (!product) return null;
+
+    const groupedOptions = (product.options || []).reduce(
+      (acc: any[], curr: any) => {
+        const attrName = curr.attributeValue?.attribute?.name;
+        const val = curr.attributeValue?.value;
+
+        if (attrName && val) {
+          const existing = acc.find((item) => item.name === attrName);
+          if (existing) {
+            existing.values.push(val);
+          } else {
+            acc.push({ name: attrName, values: [val] });
+          }
+        }
+        return acc;
+      },
+      []
+    );
+
+    const mappedVariants = (product.variants || []).map((v: any) => ({
+      ...v,
+      stock: v.stockQuantity,
+    }));
+
+    const totalStock = mappedVariants.reduce(
+      (acc: number, variant: any) => acc + (variant.stock || 0),
+      0
+    );
+
+    const { options, variants: oldVariants, tags, ...rest } = product;
+    return {
+      ...rest,
+      options: groupedOptions,
+      variants: mappedVariants,
+      stock: totalStock,
+      tags: tags || [],
+    };
+  }
+
+  async getAllProducts(query: GetProductsFilter) {
     const {
-      page,
-      limit,
+      page = 1,
+      limit = 10,
       search,
       categoryId,
       brandId,
       minPrice,
       maxPrice,
-      sort = 'newest',
-    } = filter;
+      sort,
+      isFlashSale,
+    } = query;
+
     const offset = (page - 1) * limit;
 
     const whereConditions = [];
@@ -270,6 +372,17 @@ export class ProductRepository {
       );
     }
 
+    if (isFlashSale) {
+      const now = new Date();
+      whereConditions.push(
+        and(
+          gt(products.discountValue, 0), // Has discount
+          or(isNull(products.discountStartDate), lte(products.discountStartDate, now)), // Started or no start date
+          or(isNull(products.discountEndDate), gte(products.discountEndDate, now)) // Not yet ended or no end date
+        )
+      );
+    }
+
     let orderBy;
     switch (sort) {
       case 'oldest':
@@ -287,6 +400,9 @@ export class ProductRepository {
       where: and(...whereConditions),
       orderBy: orderBy,
       with: {
+        brand: true,
+        thumbnail: true,
+        metaImage: true,
         images: {
           with: {
             media: true,
@@ -296,6 +412,15 @@ export class ProductRepository {
         collections: {
           with: {
             collection: true,
+          },
+        },
+        options: {
+          with: {
+            attributeValue: {
+              with: {
+                attribute: true,
+              },
+            },
           },
         },
         variants: {
@@ -313,13 +438,14 @@ export class ProductRepository {
         },
       },
     });
+
     const [total] = await this.db
       .select({ count: count() })
       .from(products)
       .where(and(...whereConditions));
 
     return {
-      products: allProducts,
+      products: allProducts.map((p) => this.mapProductOptions(p)),
       total: total?.count || 0,
     };
   }
@@ -343,6 +469,15 @@ export class ProductRepository {
             collection: true,
           },
         },
+        options: {
+          with: {
+            attributeValue: {
+              with: {
+                attribute: true,
+              },
+            },
+          },
+        },
         variants: {
           with: {
             attributes: {
@@ -358,53 +493,107 @@ export class ProductRepository {
         },
       },
     });
-    return product;
+    if (!product) return null;
+
+    return this.mapProductOptions(product);
+  }
+
+  async updateProduct(id: string, data: UpdateProductInput) {
+    const {
+      variants,
+      mediaIds,
+      collectionIds,
+      options,
+      discountStartDate,
+      discountEndDate,
+      ...productData
+    } = data;
+
+    return await this.db.transaction(async (tx) => {
+      // 1. Prepare and Update basic product info
+      const updatePayload: Record<string, any> = { ...productData };
+      if (discountStartDate !== undefined) {
+        updatePayload.discountStartDate = discountStartDate ? new Date(discountStartDate) : null;
+      }
+      if (discountEndDate !== undefined) {
+        updatePayload.discountEndDate = discountEndDate ? new Date(discountEndDate) : null;
+      }
+
+      if (Object.keys(updatePayload).length > 0) {
+        await tx
+          .update(products)
+          .set(updatePayload)
+          .where(eq(products.id, id));
+      }
+
+      // 2. Update Options (Sync)
+      if (options !== undefined) {
+        // Delete existing options
+        await tx
+          .delete(productAttributeOptions)
+          .where(eq(productAttributeOptions.productId, id));
+
+        // Insert new options
+        if (options && options.length > 0) {
+          for (const option of options) {
+            // Find or create attribute
+            let attr = await tx.query.attributes.findFirst({
+              where: eq(attributes.name, option.name),
+            });
+
+            if (!attr) {
+              const [newAttr] = await tx
+                .insert(attributes)
+                .values({ name: option.name })
+                .returning();
+              attr = newAttr;
+            }
+
+            // Handle values
+            for (const valName of option.values) {
+              let val = await tx.query.attributeValues.findFirst({
+                where: and(
+                  eq(attributeValues.attributeId, attr!.id),
+                  eq(attributeValues.value, valName)
+                ),
+              });
+
+              if (!val) {
+                const [newVal] = await tx
+                  .insert(attributeValues)
+                  .values({
+                    attributeId: attr!.id,
+                    value: valName,
+                  })
+                  .returning();
+                val = newVal;
+              }
+
+              // Link to Product
+              await tx
+                .insert(productAttributeOptions)
+                .values({
+                  productId: id,
+                  attributeValueId: val!.id,
+                })
+                .onConflictDoNothing();
+            }
+          }
+        }
+      }
+
+      // 3. Variant/Media Sync can be added here if needed in the future
+
+      return this.getProductById(id);
+    });
   }
 
   async deleteProduct(id: string) {
-    // Soft delete logic can be implemented here if schema has deletedAt
-    // For now, let's assuming Hard Delete based on user conversation or implementing standard delete
-    // User mentioned "Logic: Soft Delete" in conversation history, but schema might not have it yet.
-    // Let's check schema. If no deletedAt, I will do hard delete for now or update schema.
-    // Checking schema... it has ...timestamps. Does it have deletedAt?
-    // I recall schema definition: ...timestamps usually adds created_at, updated_at.
-    // I will implement hard delete first for simplicity as schema update is another step.
-    // Actually, user discussed Soft Delete. I should probably add deletedAt to schema if missing.
-    // For now, I will use hard delete and notify user.
     return await this.db.delete(products).where(eq(products.id, id));
   }
 
   async deleteManyProducts(ids: string[]) {
     return await this.db.delete(products).where(inArray(products.id, ids));
-  }
-
-  async updateProduct(id: string, data: UpdateProductInput) {
-    // Simple update for now, complex variant update is for later iteration
-    const {
-      variants,
-      mediaIds,
-      collectionIds,
-      discountStartDate,
-      discountEndDate,
-      ...rest
-    } = data;
-
-    const updateData: Record<string, unknown> = { ...rest };
-    if (discountStartDate !== undefined) {
-      updateData.discountStartDate = discountStartDate
-        ? new Date(discountStartDate)
-        : null;
-    }
-
-    if (discountEndDate !== undefined) {
-      updateData.discountEndDate = discountEndDate
-        ? new Date(discountEndDate)
-        : null;
-    }
-    await this.db.update(products).set(updateData).where(eq(products.id, id));
-    // Note: variants and media update logic is omitted for brevity/MVP
-    // To be "reasonable", we should at least support basic info update.
-    return this.getProductById(id);
   }
 
   // --- Category Methods ---
@@ -469,11 +658,25 @@ export class ProductRepository {
   // --- Attribute Methods ---
 
   async createAttribute(data: CreateAttributeInput) {
-    const [attribute] = await this.db
-      .insert(attributes)
-      .values(data)
-      .returning();
-    return attribute;
+    const { name, values } = data;
+
+    return await this.db.transaction(async (tx) => {
+      const [attribute] = await tx
+        .insert(attributes)
+        .values({ name })
+        .returning();
+
+      if (values && values.length > 0) {
+        await tx.insert(attributeValues).values(
+          values.map((value) => ({
+            attributeId: attribute!.id,
+            value,
+          }))
+        );
+      }
+
+      return attribute;
+    });
   }
 
   async getAllAttributes(page: number = 1, limit: number = 10) {
@@ -555,5 +758,13 @@ export class ProductRepository {
   }
   async deleteManyBrandsSchema(ids: string[]) {
     return this.db.delete(brands).where(inArray(brands.id, ids));
+  }
+
+  async getAttributesWithValues() {
+    return this.db.query.attributes.findMany({
+      with: {
+        values: true,
+      },
+    });
   }
 }

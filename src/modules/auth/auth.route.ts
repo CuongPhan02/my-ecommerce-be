@@ -33,7 +33,8 @@ export const authRoutes = (fastify: FastifyInstance) => {
           email: { type: 'string', format: 'email' },
           password: { type: 'string', minLength: 8 },
           name: { type: 'string' },
-          avatarUrl: { type: 'string', nullable: true },
+          phone: { type: 'string', nullable: true },
+          address: { type: 'string', nullable: true },
           urlRedirect: { type: 'string', format: 'url', nullable: true },
         },
       },
@@ -61,6 +62,7 @@ export const authRoutes = (fastify: FastifyInstance) => {
         properties: {
           email: { type: 'string', format: 'email' },
           password: { type: 'string' },
+          isMobile: { type: 'boolean', nullable: true },
         },
       },
     },
@@ -205,7 +207,7 @@ export const authRoutes = (fastify: FastifyInstance) => {
   // ===== api text authorization =====
   routeWithZod(fastify, {
     method: 'get',
-    url: '/users-all',
+    url: '/users',
     disableValidator: true,
     preHandler: [authenticate],
     roles: [ROLE_NAME.ADMIN, ROLE_NAME.SUPER_ADMIN],
@@ -229,13 +231,14 @@ export const authRoutes = (fastify: FastifyInstance) => {
     swaggerSchema: {
       tags: [AUTH_TAG],
       summary: 'Google Login',
-      description: 'Login with Google ID Token',
+      description: 'Login with Google Authorization Code',
       body: {
         type: 'object',
-        required: ['idToken'],
+        required: ['code'],
         properties: {
-          idToken: { type: 'string' },
+          code: { type: 'string' },
           urlRedirect: { type: 'string', format: 'url', nullable: true },
+          isMobile: { type: 'boolean', nullable: true },
         },
       },
     },

@@ -9,6 +9,13 @@ export const PAGINATION_QUERYSTRING = {
     page: { type: 'number', default: 1 },
     limit: { type: 'number', default: 10 },
     search: { type: 'string', nullable: true },
+  },
+};
+
+export const PRODUCT_PAGINATION_QUERYSTRING = {
+  type: 'object',
+  properties: {
+    ...PAGINATION_QUERYSTRING.properties,
     categoryId: { type: 'string', nullable: true },
     brandId: { type: 'string', nullable: true },
     minPrice: { type: 'number', minimum: 0, nullable: true },
@@ -40,6 +47,8 @@ export const PRODUCT_DOCUMENTATION = {
   PRODUCT_SUMMARIES: {
     CREATE_PRODUCT: 'Create a new product',
     GET_ALL_PRODUCTS: 'Get all products',
+    GET_NEW_ARRIVALS: 'Get new arrivals products',
+    GET_FLASH_SALES: 'Get flash sales products',
     GET_PRODUCT_BY_ID: 'Get product by id',
     UPDATE_PRODUCT: 'Update product',
     DELETE_PRODUCT: 'Delete product',
@@ -48,6 +57,8 @@ export const PRODUCT_DOCUMENTATION = {
   PRODUCT_DESCRIPTIONS: {
     CREATE_PRODUCT: 'Create a new product',
     GET_ALL_PRODUCTS: 'Get all products',
+    GET_NEW_ARRIVALS: 'Get the latest new products for the homepage',
+    GET_FLASH_SALES: 'Get products that are currently on flash sale',
     GET_PRODUCT_BY_ID: 'Get product by id',
     UPDATE_PRODUCT: 'Update product',
     DELETE_PRODUCT: 'Delete product',
@@ -126,6 +137,21 @@ export const PRODUCT_DOCUMENTATION = {
           items: { type: 'string' },
           description: 'Danh sách ID bộ sưu tập',
         },
+        options: {
+          type: 'array',
+          description: 'Danh sách các thuộc tính và giá trị có sẵn của sản phẩm',
+          items: {
+            type: 'object',
+            properties: {
+              name: { type: 'string', example: 'Color' },
+              values: {
+                type: 'array',
+                items: { type: 'string' },
+                example: ['Red', 'Blue'],
+              },
+            },
+          },
+        },
         variants: {
           type: 'array',
           description: 'Danh sách biến thể (khi type = VARIANT)',
@@ -188,6 +214,21 @@ export const PRODUCT_DOCUMENTATION = {
           format: 'date-time',
           nullable: true,
         },
+        options: {
+          type: 'array',
+          description: 'Danh sách các thuộc tính và giá trị có sẵn của sản phẩm',
+          items: {
+            type: 'object',
+            properties: {
+              name: { type: 'string', example: 'Color' },
+              values: {
+                type: 'array',
+                items: { type: 'string' },
+                example: ['Red', 'Blue'],
+              },
+            },
+          },
+        },
       },
     },
     DELETE_MANY_PRODUCTS: DELETE_MANY_SCHEMA,
@@ -241,14 +282,17 @@ export const ATTRIBUTE_DOCUMENTATION = {
     UPDATE_ATTRIBUTE: 'Update attribute',
     DELETE_ATTRIBUTE: 'Delete attribute',
     DELETE_MANY_ATTRIBUTES: 'Delete many attributes',
+    GET_ATTRIBUTES_WITH_VALUES: 'Get all attributes with their values',
   },
   ATTRIBUTE_DESCRIPTIONS: {
-    CREATE_ATTRIBUTE: 'Create a new attribute',
-    GET_ALL_ATTRIBUTES: 'Get all attributes',
+    CREATE_ATTRIBUTE: 'Create a new attribute (optionally with values)',
+    GET_ALL_ATTRIBUTES: 'Get all attributes (paginated)',
     GET_ATTRIBUTE_BY_ID: 'Get attribute by id',
     UPDATE_ATTRIBUTE: 'Update attribute',
     DELETE_ATTRIBUTE: 'Delete attribute',
     DELETE_MANY_ATTRIBUTES: 'Delete multiple attributes by IDs',
+    GET_ATTRIBUTES_WITH_VALUES:
+      'Get all attributes with their values for product selection',
   },
   ATTRIBUTE_REQUEST_BODIES: {
     CREATE_ATTRIBUTE: {
@@ -256,6 +300,11 @@ export const ATTRIBUTE_DOCUMENTATION = {
       required: ['name'],
       properties: {
         name: { type: 'string', example: 'Color' },
+        values: {
+          type: 'array',
+          items: { type: 'string' },
+          example: ['Red', 'Blue', 'Green'],
+        },
       },
     },
     UPDATE_ATTRIBUTE: {

@@ -74,6 +74,42 @@ export const productController = (fastify: FastifyInstance) => {
       );
     },
 
+    getNewArrivalsHandler: async (
+      req: FastifyRequest<{ Querystring?: { limit?: number } }>,
+      reply: FastifyReply
+    ) => {
+      const limit = Number(req.query?.limit) || 10;
+      const result = await service.getAllProducts({
+        page: 1,
+        limit,
+        sort: 'newest',
+      });
+      return sendResponseSuccess(
+        200,
+        reply,
+        'Get new arrivals success',
+        result
+      );
+    },
+
+    getFlashSalesHandler: async (
+      req: FastifyRequest<{ Querystring?: { limit?: number } }>,
+      reply: FastifyReply
+    ) => {
+      const limit = Number(req.query?.limit) || 10;
+      const result = await service.getAllProducts({
+        page: 1,
+        limit,
+        isFlashSale: true,
+      });
+      return sendResponseSuccess(
+        200,
+        reply,
+        'Get flash sales success',
+        result
+      );
+    },
+
     getProductByIdHandler: async (
       req: FastifyRequest<{ Params?: { id: string } }>,
       reply: FastifyReply
@@ -226,6 +262,19 @@ export const productController = (fastify: FastifyInstance) => {
         200,
         reply,
         'Get all attributes success',
+        result
+      );
+    },
+
+    getAttributesWithValuesHandler: async (
+      _req: FastifyRequest,
+      reply: FastifyReply
+    ) => {
+      const result = await service.getAttributesWithValues();
+      return sendResponseSuccess(
+        200,
+        reply,
+        'Get attributes with values success',
         result
       );
     },
