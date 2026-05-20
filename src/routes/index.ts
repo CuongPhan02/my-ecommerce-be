@@ -8,6 +8,11 @@ import { settingRoutes } from '@/modules/setting/setting.route';
 import { navigationRoutes } from '@/modules/navigation/navigation.route';
 
 const registerRoutes = (server: FastifyInstance) => {
+  // Lightweight ping route to keep server awake on Render / free hosting platforms
+  server.get('/api/ping', async (_request, reply) => {
+    return reply.status(200).send({ status: 'ok', timestamp: new Date().toISOString() });
+  });
+
   server.register(authRoutes, { prefix: '/api/auth' });
   server.register(mediaRoutes, { prefix: '/api/media' });
   server.register(productRoutes, { prefix: '/api/products' });
