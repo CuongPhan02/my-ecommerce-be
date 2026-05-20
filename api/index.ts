@@ -1,3 +1,4 @@
+import 'tsconfig-paths/register';
 import { IncomingMessage, ServerResponse } from 'http';
 import { buildServer } from '../src/app';
 
