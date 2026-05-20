@@ -36,6 +36,7 @@ export function buildServer() {
     },
     // Trust Proxy if behind Nginx/Cloudflare
     trustProxy: true,
+    pluginTimeout: 30000, // 30 seconds to prevent cold start timeouts on serverless
   }).withTypeProvider<ZodTypeProvider>();
 
   // Security Plugins
@@ -153,11 +154,8 @@ export function buildServer() {
   server.register(fastifyApiReference, {
     routePrefix: '/docs',
     configuration: {
-      spec: {
-        content: () => server.swagger(),
-      },
+      theme: 'kepler',
       // You can also add more Scalar options here
-      theme: 'Kepler-11e',
       // url: 'https://registry.scalar.com/phong_phan/apis/ecommerce-app-project-phong-phan/latest?format=json',
       // agent: ENV_CONFIG.SCALAR_API_KEY
       //   ? { key: ENV_CONFIG.SCALAR_API_KEY }
