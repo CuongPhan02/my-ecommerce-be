@@ -1,5 +1,5 @@
 import { IncomingMessage, ServerResponse } from 'http';
-import { buildServer } from '../dist/app';
+import { buildServer } from '../src/app';
 
 // Khởi tạo server bên ngoài handler để tận dụng khả năng giữ ấm (warm start)
 // Điều này giúp tái sử dụng kết nối cơ sở dữ liệu và tối ưu hóa cold start.
