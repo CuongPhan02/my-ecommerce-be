@@ -11,6 +11,7 @@ import { cartRoutes } from '@/modules/cart/cart.route';
 import { refundRoutes } from '@/modules/refund/refund.route';
 import { userRoutes } from '@/modules/user/user.route';
 import { inventoryRoutes } from '@/modules/inventory/inventory.route';
+import { reviewRoutes } from '@/modules/review/review.route';
 
 const registerRoutes = (server: FastifyInstance) => {
   server.register(authRoutes, { prefix: '/api/auth' });
@@ -25,6 +26,7 @@ const registerRoutes = (server: FastifyInstance) => {
   server.register(refundRoutes, { prefix: '/api/refunds' });
   server.register(userRoutes, { prefix: '/api/users' });
   server.register(inventoryRoutes, { prefix: '/api/inventory' });
+  server.register(reviewRoutes, { prefix: '/api/reviews' });
 };
 
 export default registerRoutes;

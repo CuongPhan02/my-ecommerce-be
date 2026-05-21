@@ -5,5 +5,6 @@ export * from './orders';
 export * from './settings';
 export * from './navigate';
 export * from './inventory';
+export * from './reviews';
 export * from '../_helpers';
 
