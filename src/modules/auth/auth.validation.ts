@@ -54,6 +54,17 @@ export const googleLoginSchema = z.object({
   isMobile: z.boolean().optional(),
 });
 
+export const updateProfileSchema = z.object({
+  name: z.string().min(3).optional(),
+  phone: z.string().optional(),
+  avatarUrl: z.string().url().optional().nullable(),
+});
+
+export const changePasswordSchema = z.object({
+  currentPassword: z.string().min(6),
+  newPassword: z.string().min(6),
+});
+
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
 export type GoogleLoginInput = z.infer<typeof googleLoginSchema>;
@@ -64,5 +75,7 @@ export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
 export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
 export type VerifyEmailInput = z.infer<typeof verifyEmailSchema>;
 export type ResendVerifyEmailInput = z.infer<typeof resendVerifyEmailSchema>;
+export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;
+export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
 
 export type Users = typeof users.$inferSelect;

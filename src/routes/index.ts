@@ -6,13 +6,12 @@ import { collectionRoutes } from '@/modules/collection/collection.route';
 import { FastifyInstance } from 'fastify';
 import { settingRoutes } from '@/modules/setting/setting.route';
 import { navigationRoutes } from '@/modules/navigation/navigation.route';
+import { orderRoutes } from '@/modules/order/order.route';
+import { cartRoutes } from '@/modules/cart/cart.route';
+import { refundRoutes } from '@/modules/refund/refund.route';
+import { userRoutes } from '@/modules/user/user.route';
 
 const registerRoutes = (server: FastifyInstance) => {
-  // Lightweight ping route to keep server awake on Render / free hosting platforms
-  server.get('/api/ping', async (_request, reply) => {
-    return reply.status(200).send({ status: 'ok', timestamp: new Date().toISOString() });
-  });
-
   server.register(authRoutes, { prefix: '/api/auth' });
   server.register(mediaRoutes, { prefix: '/api/media' });
   server.register(productRoutes, { prefix: '/api/products' });
@@ -20,6 +19,10 @@ const registerRoutes = (server: FastifyInstance) => {
   server.register(collectionRoutes, { prefix: '/api/collections' });
   server.register(navigationRoutes, { prefix: '/api/navigate' });
   server.register(settingRoutes, { prefix: '/api/settings' });
+  server.register(orderRoutes, { prefix: '/api/orders' });
+  server.register(cartRoutes, { prefix: '/api/cart' });
+  server.register(refundRoutes, { prefix: '/api/refunds' });
+  server.register(userRoutes, { prefix: '/api/users' });
 };
 
 export default registerRoutes;

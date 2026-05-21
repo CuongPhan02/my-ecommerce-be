@@ -8,7 +8,7 @@ import {
   unique,
 } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
-import { cuid, timestamps, orderStatusEnum, discountTypeEnum, paymentStatusEnum } from '../_helpers';
+import { cuid, timestamps, orderStatusEnum, discountTypeEnum, paymentStatusEnum, refundStatusEnum } from '../_helpers';
 import { users, addresses } from './users';
 import { productVariants } from './products';
 
@@ -132,6 +132,7 @@ export const ordersRelations = relations(orders, ({ one, many }) => ({
     fields: [orders.couponId],
     references: [coupons.id],
   }),
+  refundRequests: many(refundRequests),
 }));
 
 export const orderItemsRelations = relations(orderItems, ({ one }) => ({
@@ -153,5 +154,36 @@ export const paymentsRelations = relations(payments, ({ one }) => ({
   order: one(orders, {
     fields: [payments.orderId],
     references: [orders.id],
+  }),
+}));
+
+export const refundRequests = pgTable('refund_request', {
+  id: text('id')
+    .$defaultFn(() => cuid())
+    .primaryKey(),
+  code: text('code').unique().notNull(),
+  orderId: text('order_id')
+    .notNull()
+    .references(() => orders.id, { onDelete: 'cascade' }),
+  userId: text('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  reason: text('reason').notNull(),
+  status: refundStatusEnum('status').default('PENDING'),
+  amount: doublePrecision('amount').notNull(),
+  refundMethod: text('refund_method'),
+  rejectReason: text('reject_reason'),
+  internalNote: text('internal_note'),
+  ...timestamps,
+});
+
+export const refundRequestsRelations = relations(refundRequests, ({ one }) => ({
+  order: one(orders, {
+    fields: [refundRequests.orderId],
+    references: [orders.id],
+  }),
+  user: one(users, {
+    fields: [refundRequests.userId],
+    references: [users.id],
   }),
 }));

@@ -14,12 +14,15 @@ export const users = pgTable('users', {
   verificationTokenExpires: timestamp('verification_token_expires'),
   avatarUrl: text('avatar_url'),
   role: userRoleEnum('role').default('CUSTOMER'),
+  isActive: boolean('is_active').default(true).notNull(),
   password: text('password'),
   resetPasswordToken: text('reset_password_token'),
   resetPasswordExpires: timestamp('reset_password_expires'),
   googleId: text('google_id').unique(),
   phone: text('phone').unique(),
   address: text('address'),
+  staffCode: text('staff_code').unique(),
+  lastLogin: timestamp('last_login'),
   ...timestamps,
 });
 

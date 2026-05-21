@@ -7,7 +7,7 @@ import { createId } from '@paralleldrive/cuid2';
 import { ENV_CONFIG } from '@/config/env';
 import ms from 'ms';
 import { AuthRepository } from './auth.repository';
-import { LoginInput, RegisterInput } from './auth.validation';
+import { LoginInput, RegisterInput, UpdateProfileInput, ChangePasswordInput } from './auth.validation';
 import {
   ConflictError,
   NotFoundError,
@@ -87,6 +87,7 @@ export class AuthService {
       userAgent,
       ip
     );
+    await this.repo.updateLastLogin(findUserByEmail.id);
     return {
       accessToken,
       refreshToken,
@@ -226,6 +227,7 @@ export class AuthService {
       userAgent,
       ip
     );
+    await this.repo.updateLastLogin(user!.id);
 
     return {
       accessToken,
@@ -420,5 +422,30 @@ export class AuthService {
     await this.repo.updateUser(user);
 
     return { message: 'Password reset successfully' };
+  }
+
+  async updateProfile(userId: string, data: UpdateProfileInput) {
+    const user = await this.repo.findUserById(userId);
+    if (!user) throw new NotFoundError('User not found');
+    return this.repo.updateProfile(userId, data);
+  }
+
+  async changePassword(userId: string, data: ChangePasswordInput) {
+    const user = await this.repo.findUserById(userId);
+    if (!user) throw new NotFoundError('User not found');
+
+    if (!user.password) {
+      throw new BadRequestError('Mật khẩu của tài khoản đăng nhập Google không thể thay đổi theo cách thông thường');
+    }
+
+    const isValid = await comparePassword(data.currentPassword, user.password);
+    if (!isValid) {
+      throw new BadRequestError('Mật khẩu hiện tại không chính xác');
+    }
+
+    const hashedPassword = await hashPassword(data.newPassword);
+    await this.repo.updatePassword(userId, hashedPassword);
+
+    return { message: 'Password updated successfully' };
   }
 }

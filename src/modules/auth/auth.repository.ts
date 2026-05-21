@@ -122,4 +122,52 @@ export class AuthRepository {
       },
     });
   }
+
+  async updateLastLogin(userId: string) {
+    return this.db
+      .update(users)
+      .set({ lastLogin: new Date() })
+      .where(eq(users.id, userId));
+  }
+
+  async updateProfile(
+    userId: string,
+    data: { name?: string | undefined; phone?: string | undefined; avatarUrl?: string | null | undefined }
+  ) {
+    const updateData: any = {};
+    if (data.phone !== undefined) updateData.phone = data.phone;
+    if (data.avatarUrl !== undefined) updateData.avatarUrl = data.avatarUrl;
+    if (data.name !== undefined) updateData.name = data.name;
+
+    return this.db.transaction(async (tx) => {
+      const [updatedUser] = await tx
+        .update(users)
+        .set(updateData)
+        .where(eq(users.id, userId))
+        .returning();
+
+      if (data.name !== undefined) {
+        const nameParts = data.name.trim().split(' ');
+        const firstName = nameParts[0];
+        const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : firstName;
+
+        await tx
+          .update(profiles)
+          .set({
+            firstName: firstName as string,
+            lastName: lastName as string,
+          })
+          .where(eq(profiles.userId, userId));
+      }
+
+      return updatedUser;
+    });
+  }
+
+  async updatePassword(userId: string, hashedPassword: string) {
+    return this.db
+      .update(users)
+      .set({ password: hashedPassword })
+      .where(eq(users.id, userId));
+  }
 }

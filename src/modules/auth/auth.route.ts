@@ -11,6 +11,8 @@ import {
   forgotPasswordSchema,
   resetPasswordSchema,
   googleLoginSchema,
+  updateProfileSchema,
+  changePasswordSchema,
 } from './auth.validation';
 import { ROLE_NAME } from '@/constants';
 
@@ -244,5 +246,51 @@ export const authRoutes = (fastify: FastifyInstance) => {
     },
     bodySchema: googleLoginSchema,
     handler: controller.googleLoginHandler,
+  });
+
+  routeWithZod(fastify, {
+    method: 'put',
+    url: '/profile',
+    disableValidator: true,
+    preHandler: [authenticate],
+    swaggerSchema: {
+      tags: [AUTH_TAG],
+      summary: 'Update Own Profile',
+      description: 'Update the logged-in user profile details (Name, Phone, Avatar Url)',
+      security: [{ bearerAuth: [] }],
+      body: {
+        type: 'object',
+        properties: {
+          name: { type: 'string', minLength: 3, nullable: true },
+          phone: { type: 'string', nullable: true },
+          avatarUrl: { type: 'string', format: 'url', nullable: true },
+        },
+      },
+    },
+    bodySchema: updateProfileSchema,
+    handler: controller.updateProfileHandler,
+  });
+
+  routeWithZod(fastify, {
+    method: 'put',
+    url: '/change-password',
+    disableValidator: true,
+    preHandler: [authenticate],
+    swaggerSchema: {
+      tags: [AUTH_TAG],
+      summary: 'Change Own Password',
+      description: 'Change the logged-in user password',
+      security: [{ bearerAuth: [] }],
+      body: {
+        type: 'object',
+        required: ['currentPassword', 'newPassword'],
+        properties: {
+          currentPassword: { type: 'string', minLength: 6 },
+          newPassword: { type: 'string', minLength: 6 },
+        },
+      },
+    },
+    bodySchema: changePasswordSchema,
+    handler: controller.changePasswordHandler,
   });
 };

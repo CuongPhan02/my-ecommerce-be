@@ -16,6 +16,10 @@ export const userRoleEnum = pgEnum('user_role', [
   'ADMIN',
   'SUPER_ADMIN',
   'STAFF',
+  'VENDOR',
+  'SALES',
+  'EDITOR',
+  'INVENTORY',
 ]);
 export const mediaTypeEnum = pgEnum('media_type', [
   'IMAGE',
@@ -43,3 +47,9 @@ export const paymentStatusEnum = pgEnum('payment_status', [
 ]);
 
 export const productTypeEnum = pgEnum('product_type', ['SINGLE', 'VARIANT']);
+
+export const refundStatusEnum = pgEnum('refund_status', [
+  'PENDING',
+  'APPROVED',
+  'REJECTED',
+]);

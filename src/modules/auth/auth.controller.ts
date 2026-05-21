@@ -9,6 +9,8 @@ import {
   ResendVerifyEmailInput,
   ForgotPasswordInput,
   ResetPasswordInput,
+  UpdateProfileInput,
+  ChangePasswordInput,
 } from './auth.validation';
 import { sendResponseSuccess } from '@/utils/sendResponse';
 import { AuthRepository } from './auth.repository';
@@ -206,6 +208,24 @@ export const authController = (fastify: FastifyInstance) => {
         req.body!.password
       );
       return sendResponseSuccess(200, reply, 'Reset password success', result);
+    },
+
+    updateProfileHandler: async (
+      req: FastifyRequest<{ Body?: UpdateProfileInput }>,
+      reply: FastifyReply
+    ) => {
+      const user = req.user as { id: string };
+      const result = await service.updateProfile(user.id, req.body!);
+      return sendResponseSuccess(200, reply, 'Update profile success', result);
+    },
+
+    changePasswordHandler: async (
+      req: FastifyRequest<{ Body?: ChangePasswordInput }>,
+      reply: FastifyReply
+    ) => {
+      const user = req.user as { id: string };
+      const result = await service.changePassword(user.id, req.body!);
+      return sendResponseSuccess(200, reply, 'Change password success', result);
     },
   };
 };
