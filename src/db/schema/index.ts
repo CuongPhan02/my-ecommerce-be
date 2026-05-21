@@ -4,4 +4,6 @@ export * from './products';
 export * from './orders';
 export * from './settings';
 export * from './navigate';
+export * from './inventory';
 export * from '../_helpers';
+
