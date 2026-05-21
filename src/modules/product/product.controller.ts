@@ -12,6 +12,7 @@ import {
   DeleteManyCategoriesInput,
   DeleteManyAttributesInput,
   DeleteManyBrandsInput,
+  SaleTimerInput,
 } from './product.validate';
 import { sendResponseSuccess } from '@/utils/sendResponse';
 import { ProductService } from './product.service';
@@ -162,7 +163,27 @@ export const productController = (fastify: FastifyInstance) => {
       );
     },
 
-    // ===== PRODUCT CONTROLLER ===== //
+    /**
+     * PUT /api/products/:id/sale-timer
+     * Thiết lập timer khuyến mãi cho sản phẩm
+     */
+    setSaleTimerHandler: async (
+      req: FastifyRequest<{
+        Params: { id: string };
+        Body: SaleTimerInput;
+      }>,
+      reply: FastifyReply
+    ) => {
+      const result = await service.setSaleTimer(req.params.id, req.body);
+      return sendResponseSuccess(
+        200,
+        reply,
+        'Sale timer updated successfully',
+        result
+      );
+    },
+
+    // ===== CATEGORY CONTROLLER ===== //
 
     createCategoryHandler: async (
       req: FastifyRequest<{ Body: CreateCategoryInput }>,

@@ -170,6 +170,7 @@ export const collections = pgTable('collection', {
   description: text('description'),
   imageUrl: text('image_url'),
   isActive: boolean('is_active').default(true),
+  isHomeActive: boolean('is_home_active').default(false), // Hiển thị trên trang chủ
   ...timestamps,
 });
 

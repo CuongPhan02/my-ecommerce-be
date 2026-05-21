@@ -4,8 +4,25 @@ import {
   UpdateCollectionInput,
 } from './collection.validate';
 import { collections, productsToCollections } from '@/db/schema';
-import { eq, desc } from 'drizzle-orm';
-import { count } from 'drizzle-orm';
+import { eq, desc, and, asc, count } from 'drizzle-orm';
+
+// Reusable product with relations config
+const PRODUCT_WITH_RELATIONS = {
+  with: {
+    product: {
+      with: {
+        brand: true,
+        thumbnail: true,
+        metaImage: true,
+        images: {
+          with: {
+            media: true,
+          },
+        },
+      },
+    },
+  },
+} as const;
 
 export class CollectionRepository {
   private db: Database;
@@ -40,22 +57,7 @@ export class CollectionRepository {
       offset: offset,
       orderBy: [desc(collections.createdAt)],
       with: {
-        products: {
-          with: {
-            product: {
-              with: {
-                brand: true,
-                thumbnail: true,
-                metaImage: true,
-                images: {
-                  with: {
-                    media: true,
-                  },
-                },
-              },
-            },
-          },
-        },
+        products: PRODUCT_WITH_RELATIONS,
       },
     });
     const [total] = await this.db.select({ count: count() }).from(collections);
@@ -70,22 +72,24 @@ export class CollectionRepository {
     return this.db.query.collections.findFirst({
       where: eq(collections.id, id),
       with: {
-        products: {
-          with: {
-            product: {
-              with: {
-                brand: true,
-                thumbnail: true,
-                metaImage: true,
-                images: {
-                  with: {
-                    media: true,
-                  },
-                },
-              },
-            },
-          },
-        },
+        products: PRODUCT_WITH_RELATIONS,
+      },
+    });
+  }
+
+  /**
+   * Lấy danh sách collections được bật hiển thị trên trang chủ
+   * Điều kiện: isHomeActive = true AND isActive = true
+   */
+  async getHomeCollections() {
+    return this.db.query.collections.findMany({
+      where: and(
+        eq(collections.isHomeActive, true),
+        eq(collections.isActive, true)
+      ),
+      orderBy: [asc(collections.createdAt)],
+      with: {
+        products: PRODUCT_WITH_RELATIONS,
       },
     });
   }
@@ -94,6 +98,18 @@ export class CollectionRepository {
     const [updated] = await this.db
       .update(collections)
       .set(data)
+      .where(eq(collections.id, id))
+      .returning();
+    return updated;
+  }
+
+  /**
+   * Bật/tắt hiển thị collection trên trang chủ
+   */
+  async toggleHomeActive(id: string, isHomeActive: boolean) {
+    const [updated] = await this.db
+      .update(collections)
+      .set({ isHomeActive, updatedAt: new Date() })
       .where(eq(collections.id, id))
       .returning();
     return updated;

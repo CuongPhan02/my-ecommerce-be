@@ -51,6 +51,7 @@ export const PRODUCT_DOCUMENTATION = {
     GET_FLASH_SALES: 'Get flash sales products',
     GET_PRODUCT_BY_ID: 'Get product by id',
     UPDATE_PRODUCT: 'Update product',
+    SET_SALE_TIMER: 'Set sale timer for a product (Admin)',
     DELETE_PRODUCT: 'Delete product',
     DELETE_MANY_PRODUCTS: 'Delete many products',
   },
@@ -61,6 +62,8 @@ export const PRODUCT_DOCUMENTATION = {
     GET_FLASH_SALES: 'Get products that are currently on flash sale',
     GET_PRODUCT_BY_ID: 'Get product by id',
     UPDATE_PRODUCT: 'Update product',
+    SET_SALE_TIMER:
+      'Thiết lập thời gian khuyến mãi cho sản phẩm. discountType: PERCENTAGE (%) hoặc FIXED (số tiền cố định). discountValue: giá trị giảm. discountStartDate/discountEndDate: thời gian hiệu lực. Nếu để null, sale chạy ngay lập tức/không hết hạn.',
     DELETE_PRODUCT: 'Delete product',
     DELETE_MANY_PRODUCTS: 'Delete multiple products by IDs',
   },
@@ -232,6 +235,37 @@ export const PRODUCT_DOCUMENTATION = {
       },
     },
     DELETE_MANY_PRODUCTS: DELETE_MANY_SCHEMA,
+    SET_SALE_TIMER: {
+      type: 'object',
+      required: ['discountType', 'discountValue'],
+      properties: {
+        discountType: {
+          type: 'string',
+          enum: ['PERCENTAGE', 'FIXED'],
+          description: 'PERCENTAGE = giảm %, FIXED = giảm số tiền cố định',
+        },
+        discountValue: {
+          type: 'number',
+          minimum: 0,
+          example: 20,
+          description: 'Giá trị giảm (ví dụ: 20 = 20% hoặc 20.000đ)',
+        },
+        discountStartDate: {
+          type: 'string',
+          format: 'date-time',
+          nullable: true,
+          example: '2025-06-01T00:00:00+07:00',
+          description: 'Ngày bắt đầu sale. Null = bắt đầu ngay',
+        },
+        discountEndDate: {
+          type: 'string',
+          format: 'date-time',
+          nullable: true,
+          example: '2025-06-30T23:59:59+07:00',
+          description: 'Ngày kết thúc sale. Null = không hết hạn',
+        },
+      },
+    },
   },
 };
 

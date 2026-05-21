@@ -9,6 +9,7 @@ import {
   createCollectionSchema,
   updateCollectionSchema,
   addProductsToCollectionSchema,
+  toggleHomeActiveSchema,
 } from './collection.validate';
 import { collectionController } from './collection.controller';
 import { authenticate } from '@/middleware/auth.middleware';
@@ -17,7 +18,22 @@ import { ROLE_NAME } from '@/constants';
 export const collectionRoutes = (fastify: FastifyInstance) => {
   const controller = collectionController(fastify);
 
-  // GET / (Lấy tất cả bộ sưu tập)
+  // GET /api/collections/home  ← PHẢI đặt TRƯỚC /:id để tránh conflict routing
+  routeWithZod(fastify, {
+    url: '/home',
+    method: 'get',
+    disableValidator: true,
+    swaggerSchema: {
+      summary:
+        COLLECTION_DOCUMENTATION.COLLECTION_SUMMARIES.GET_HOME_COLLECTIONS,
+      description:
+        COLLECTION_DOCUMENTATION.COLLECTION_DESCRIPTIONS.GET_HOME_COLLECTIONS,
+      tags: [COLLECTION_TAG],
+    },
+    handler: controller.getHomeCollectionsHandler,
+  });
+
+  // GET /api/collections  (Lấy tất cả - Admin)
   routeWithZod(fastify, {
     url: '/',
     method: 'get',
@@ -33,14 +49,13 @@ export const collectionRoutes = (fastify: FastifyInstance) => {
     handler: controller.getAllCollectionsHandler,
   });
 
-  // POST / (Tạo mới bộ sưu tập)
+  // POST /api/collections  (Tạo mới)
   routeWithZod(fastify, {
     url: '/',
     method: 'post',
     disableValidator: true,
     swaggerSchema: {
-      body: COLLECTION_DOCUMENTATION.COLLECTION_REQUEST_BODIES
-        .CREATE_COLLECTION,
+      body: COLLECTION_DOCUMENTATION.COLLECTION_REQUEST_BODIES.CREATE_COLLECTION,
       summary: COLLECTION_DOCUMENTATION.COLLECTION_SUMMARIES.CREATE_COLLECTION,
       description:
         COLLECTION_DOCUMENTATION.COLLECTION_DESCRIPTIONS.CREATE_COLLECTION,
@@ -52,7 +67,7 @@ export const collectionRoutes = (fastify: FastifyInstance) => {
     handler: controller.createCollectionHandler,
   });
 
-  // GET /:id (Lấy chi tiết)
+  // GET /api/collections/:id  (Chi tiết)
   routeWithZod(fastify, {
     url: '/:id',
     method: 'get',
@@ -67,7 +82,7 @@ export const collectionRoutes = (fastify: FastifyInstance) => {
     handler: controller.getCollectionByIdHandler,
   });
 
-  // PUT /:id (Cập nhật)
+  // PUT /api/collections/:id  (Cập nhật)
   routeWithZod(fastify, {
     url: '/:id',
     method: 'put',
@@ -84,7 +99,25 @@ export const collectionRoutes = (fastify: FastifyInstance) => {
     handler: controller.updateCollectionHandler,
   });
 
-  // DELETE /:id (Xóa)
+  // PATCH /api/collections/:id/home-active  (Bật/tắt hiển thị homepage)
+  routeWithZod(fastify, {
+    url: '/:id/home-active',
+    method: 'patch',
+    disableValidator: true,
+    swaggerSchema: {
+      body: COLLECTION_DOCUMENTATION.COLLECTION_REQUEST_BODIES.TOGGLE_HOME_ACTIVE,
+      summary: COLLECTION_DOCUMENTATION.COLLECTION_SUMMARIES.TOGGLE_HOME_ACTIVE,
+      description:
+        COLLECTION_DOCUMENTATION.COLLECTION_DESCRIPTIONS.TOGGLE_HOME_ACTIVE,
+      tags: [COLLECTION_TAG],
+    },
+    preHandler: [authenticate],
+    roles: [ROLE_NAME.ADMIN, ROLE_NAME.SUPER_ADMIN],
+    bodySchema: toggleHomeActiveSchema,
+    handler: controller.toggleHomeActiveHandler,
+  });
+
+  // DELETE /api/collections/:id  (Xóa)
   routeWithZod(fastify, {
     url: '/:id',
     method: 'delete',
@@ -100,7 +133,7 @@ export const collectionRoutes = (fastify: FastifyInstance) => {
     handler: controller.deleteCollectionHandler,
   });
 
-  // POST /:id/products (Thêm SP vào collection)
+  // POST /api/collections/:id/products  (Thêm SP vào collection)
   routeWithZod(fastify, {
     url: '/:id/products',
     method: 'post',

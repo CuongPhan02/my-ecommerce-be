@@ -23,6 +23,7 @@ import {
   deleteManyCategoriesSchema,
   deleteManyAttributesSchema,
   deleteManyBrandsSchema,
+  saleTimerSchema,
 } from './product.validate';
 import { productController } from './product.controller';
 
@@ -134,6 +135,23 @@ export const productRoutes = (fastify: FastifyInstance) => {
     preHandler: [authenticate],
     roles: [ROLE_NAME.ADMIN, ROLE_NAME.SUPER_ADMIN],
     handler: controller.deleteProductHandler,
+  });
+
+  // PUT /api/products/:id/sale-timer — thiết lập thời gian khuyến mãi
+  routeWithZod(fastify, {
+    url: '/:id/sale-timer',
+    method: 'put',
+    disableValidator: true,
+    swaggerSchema: {
+      body: PRODUCT_DOCUMENTATION.PRODUCT_REQUEST_BODIES.SET_SALE_TIMER,
+      summary: PRODUCT_DOCUMENTATION.PRODUCT_SUMMARIES.SET_SALE_TIMER,
+      description: PRODUCT_DOCUMENTATION.PRODUCT_DESCRIPTIONS.SET_SALE_TIMER,
+      tags: [PRODUCT_TAG],
+    },
+    preHandler: [authenticate],
+    roles: [ROLE_NAME.ADMIN, ROLE_NAME.SUPER_ADMIN],
+    bodySchema: saleTimerSchema,
+    handler: controller.setSaleTimerHandler,
   });
 
   // XÓA NHIỀU SẢN PHẨM (Dùng POST để an toàn hơn với Body)

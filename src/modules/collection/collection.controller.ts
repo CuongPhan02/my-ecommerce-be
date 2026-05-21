@@ -3,6 +3,7 @@ import {
   CreateCollectionInput,
   UpdateCollectionInput,
   AddProductsToCollectionInput,
+  ToggleHomeActiveInput,
 } from './collection.validate';
 import { sendResponseSuccess } from '@/utils/sendResponse';
 import { CollectionService } from './collection.service';
@@ -42,6 +43,22 @@ export const collectionController = (fastify: FastifyInstance) => {
       );
     },
 
+    /**
+     * Lấy collections hiển thị trên trang chủ – Public
+     */
+    getHomeCollectionsHandler: async (
+      req: FastifyRequest,
+      reply: FastifyReply
+    ) => {
+      const result = await service.getHomeCollections();
+      return sendResponseSuccess(
+        200,
+        reply,
+        'Get home collections success',
+        result
+      );
+    },
+
     getCollectionByIdHandler: async (
       req: FastifyRequest<{ Params: { id: string } }>,
       reply: FastifyReply
@@ -62,6 +79,25 @@ export const collectionController = (fastify: FastifyInstance) => {
         200,
         reply,
         'Update collection success',
+        result
+      );
+    },
+
+    /**
+     * Bật/tắt hiển thị collection trên trang chủ – Admin
+     */
+    toggleHomeActiveHandler: async (
+      req: FastifyRequest<{
+        Params: { id: string };
+        Body: ToggleHomeActiveInput;
+      }>,
+      reply: FastifyReply
+    ) => {
+      const result = await service.toggleHomeActive(req.params.id, req.body);
+      return sendResponseSuccess(
+        200,
+        reply,
+        `Collection homepage visibility set to ${req.body.isHomeActive}`,
         result
       );
     },

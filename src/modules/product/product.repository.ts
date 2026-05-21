@@ -639,7 +639,39 @@ export class ProductRepository {
     });
   }
 
+  /**
+   * Cập nhật thời gian khuyến mãi (sale timer) cho sản phẩm
+   * Chỉ update các trường discount, không ảnh hưởng tới thông tin khác
+   */
+  async updateSaleTimer(
+    id: string,
+    data: {
+      discountType: 'PERCENTAGE' | 'FIXED';
+      discountValue: number;
+      discountStartDate?: string | null | undefined;
+      discountEndDate?: string | null | undefined;
+    }
+  ) {
+    const [updated] = await this.db
+      .update(products)
+      .set({
+        discountType: data.discountType,
+        discountValue: data.discountValue,
+        discountStartDate: data.discountStartDate
+          ? new Date(data.discountStartDate)
+          : null,
+        discountEndDate: data.discountEndDate
+          ? new Date(data.discountEndDate)
+          : null,
+        updatedAt: new Date(),
+      })
+      .where(eq(products.id, id))
+      .returning();
+    return updated;
+  }
+
   async updateCategory(id: string, data: UpdateCategoryInput) {
+
     return this.db
       .update(categories)
       .set(data)

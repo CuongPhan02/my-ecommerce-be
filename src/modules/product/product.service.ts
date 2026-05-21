@@ -11,6 +11,7 @@ import {
   CreateBrandInput,
   UpdateBrandInput,
   DeleteManyBrandsInput,
+  SaleTimerInput,
 } from './product.validate';
 import { GetProductsFilter, ProductRepository } from './product.repository';
 import { ConflictError, NotFoundError } from '@/utils/errors';
@@ -77,6 +78,16 @@ export class ProductService {
 
   async deleteManyProducts(data: DeleteManyProductsInput) {
     return this.repo.deleteManyProducts(data.ids);
+  }
+
+  /**
+   * Đặt / cập nhật timer khuyến mãi cho sản phẩm
+   * Validate: sản phẩm phải tồn tại
+   */
+  async setSaleTimer(id: string, data: SaleTimerInput) {
+    const product = await this.repo.getProductById(id);
+    if (!product) throw new NotFoundError('Product not found');
+    return this.repo.updateSaleTimer(id, data);
   }
 
   //======= CATEGORY SERVICE =======//

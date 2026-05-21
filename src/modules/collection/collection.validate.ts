@@ -8,6 +8,7 @@ export const createCollectionSchema = createInsertSchema(collections).extend({
   description: z.string().optional().nullable(),
   imageUrl: z.url('Invalid image URL').optional().nullable(),
   isActive: z.boolean().default(true),
+  isHomeActive: z.boolean().default(false),
 });
 
 export const updateCollectionSchema = createInsertSchema(collections).extend({
@@ -19,6 +20,7 @@ export const updateCollectionSchema = createInsertSchema(collections).extend({
   description: z.string().optional().nullable(),
   imageUrl: z.url('Invalid image URL').optional().nullable(),
   isActive: z.boolean().optional(),
+  isHomeActive: z.boolean().optional(),
 });
 
 export const deleteCollectionSchema = z.object({
@@ -29,9 +31,14 @@ export const addProductsToCollectionSchema = z.object({
   productIds: z.array(z.string('Invalid product ID')),
 });
 
+export const toggleHomeActiveSchema = z.object({
+  isHomeActive: z.boolean(),
+});
+
 export type CreateCollectionInput = z.infer<typeof createCollectionSchema>;
 export type UpdateCollectionInput = z.infer<typeof updateCollectionSchema>;
 export type DeleteCollectionInput = z.infer<typeof deleteCollectionSchema>;
 export type AddProductsToCollectionInput = z.infer<
   typeof addProductsToCollectionSchema
 >;
+export type ToggleHomeActiveInput = z.infer<typeof toggleHomeActiveSchema>;

@@ -2,6 +2,7 @@ import {
   CreateCollectionInput,
   UpdateCollectionInput,
   AddProductsToCollectionInput,
+  ToggleHomeActiveInput,
 } from './collection.validate';
 import { CollectionRepository } from './collection.repository';
 import { ConflictError, NotFoundError } from '@/utils/errors';
@@ -46,9 +47,25 @@ export class CollectionService {
     return collection;
   }
 
+  /**
+   * Lấy danh sách collections hiển thị trên trang chủ (isHomeActive=true)
+   */
+  async getHomeCollections() {
+    return this.repo.getHomeCollections();
+  }
+
   async updateCollection(id: string, data: UpdateCollectionInput) {
     await this.getCollectionById(id); // Ensure exists
     return this.repo.updateCollection(id, data);
+  }
+
+  /**
+   * Bật/tắt hiển thị collection trên trang chủ
+   */
+  async toggleHomeActive(id: string, data: ToggleHomeActiveInput) {
+    const collection = await this.repo.getCollectionById(id);
+    if (!collection) throw new NotFoundError('Collection not found');
+    return this.repo.toggleHomeActive(id, data.isHomeActive);
   }
 
   async deleteCollection(id: string) {

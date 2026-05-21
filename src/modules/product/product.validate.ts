@@ -124,6 +124,31 @@ export type GetProductInput = z.infer<typeof getProductSchema>;
 export type DeleteManyProductsInput = z.infer<typeof deleteManyProductsSchema>;
 
 /**
+ * @SALE_TIMER_SCHEMA – Đặt thời gian khuyến mãi cho sản phẩm
+ */
+export const saleTimerSchema = z
+  .object({
+    discountType: z.enum(['PERCENTAGE', 'FIXED']),
+    discountValue: z.number().min(0, 'Discount value must be non-negative'),
+    discountStartDate: z.string().datetime({ offset: true }).optional().nullable(),
+    discountEndDate: z.string().datetime({ offset: true }).optional().nullable(),
+  })
+  .refine(
+    (data) => {
+      if (data.discountStartDate && data.discountEndDate) {
+        return new Date(data.discountEndDate) > new Date(data.discountStartDate);
+      }
+      return true;
+    },
+    {
+      message: 'discountEndDate must be after discountStartDate',
+      path: ['discountEndDate'],
+    }
+  );
+
+export type SaleTimerInput = z.infer<typeof saleTimerSchema>;
+
+/**
  * @CATEGORY_SCHEMA
  */
 export const createCategorySchema = createInsertSchema(categories).extend({
