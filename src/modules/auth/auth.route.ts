@@ -64,7 +64,7 @@ export const authRoutes = (fastify: FastifyInstance) => {
         properties: {
           email: { type: 'string', format: 'email' },
           password: { type: 'string' },
-          isMobile: { type: 'boolean', nullable: true },
+          // isMobile: { type: 'boolean', nullable: true },
         },
       },
     },
@@ -256,7 +256,8 @@ export const authRoutes = (fastify: FastifyInstance) => {
     swaggerSchema: {
       tags: [AUTH_TAG],
       summary: 'Update Own Profile',
-      description: 'Update the logged-in user profile details (Name, Phone, Avatar Url)',
+      description:
+        'Update the logged-in user profile details (Name, Phone, Avatar Url)',
       security: [{ bearerAuth: [] }],
       body: {
         type: 'object',

@@ -14,7 +14,6 @@ export const registerSchema = z.object({
 export const loginSchema = z.object({
   email: z.email(),
   password: z.string().min(6),
-  isMobile: z.boolean().optional(),
 });
 
 export const getMeSchema = createSelectSchema(users);
