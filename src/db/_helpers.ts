@@ -48,6 +48,12 @@ export const paymentStatusEnum = pgEnum('payment_status', [
 
 export const productTypeEnum = pgEnum('product_type', ['SINGLE', 'VARIANT']);
 
+export const voucherTypeEnum = pgEnum('voucher_type', [
+  'PERCENTAGE',
+  'FIXED',
+  'FREE_SHIPPING',
+]);
+
 export const refundStatusEnum = pgEnum('refund_status', [
   'PENDING',
   'APPROVED',
