@@ -154,6 +154,7 @@ export const authController = (fastify: FastifyInstance) => {
 
       return sendResponseSuccess(200, reply, 'Refresh token success', {
         accessToken: result.accessToken,
+        refreshToken: result.refreshToken,
       });
     },
 
