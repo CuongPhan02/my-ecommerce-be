@@ -1,5 +1,5 @@
 import { Database } from '@/plugins/database';
-import { eq, count, inArray, and, isNull } from 'drizzle-orm';
+import { eq, count, inArray, and, isNull, sql } from 'drizzle-orm';
 import * as schema from '@/db/schema';
 import {
   MediaFolder,
@@ -90,6 +90,24 @@ export class MediaRepository {
     });
     return results;
   }
+
+  /**
+   * Lấy danh sách ID của thư mục và tất cả thư mục con (recursive)
+   * @param folderId - ID của thư mục cha
+   */
+  async getRecursiveFolderIds(folderId: string): Promise<string[]> {
+    const result = await this.db.execute(sql`
+      WITH RECURSIVE subfolders AS (
+        SELECT id FROM media_folder WHERE id = ${folderId}
+        UNION ALL
+        SELECT mf.id FROM media_folder mf
+        JOIN subfolders s ON mf.parent_id = s.id
+      )
+      SELECT id FROM subfolders;
+    `);
+    return result.rows.map((row: any) => row.id);
+  }
+
   /**
    * Lấy danh sách media (mặc định: tất cả, hoặc theo folder)
    * Có hỗ trợ phân trang
@@ -100,9 +118,11 @@ export class MediaRepository {
   async findMedia(folderId?: string, page: number = 1, limit: number = 20) {
     const offset = (page - 1) * limit;
 
-    const whereClause = folderId
-      ? eq(schema.media.folderId, folderId)
-      : undefined;
+    let whereClause;
+    if (folderId) {
+      const folderIds = await this.getRecursiveFolderIds(folderId);
+      whereClause = inArray(schema.media.folderId, folderIds);
+    }
 
     const [items, totalResult] = await Promise.all([
       this.db.query.media.findMany({
