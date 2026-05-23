@@ -2,6 +2,7 @@ import { and, asc, desc, eq, ilike, or } from 'drizzle-orm';
 import { orders, orderItems, payments } from '@/db/schema/orders';
 import { users, addresses } from '@/db/schema/users';
 import { products, productVariants } from '@/db/schema/products';
+import { media } from '@/db/schema/media';
 import { GetOrdersQuery, UpdateOrderInput } from './order.validate';
 
 export class OrderRepository {
@@ -156,11 +157,16 @@ export class OrderRepository {
           id: products.id,
           name: products.name,
           slug: products.slug,
+          thumbnail: {
+            url: media.url,
+            altText: media.altText,
+          },
         },
       })
       .from(orderItems)
       .leftJoin(productVariants, eq(orderItems.productVariantId, productVariants.id))
       .leftJoin(products, eq(productVariants.productId, products.id))
+      .leftJoin(media, eq(products.thumbnailId, media.id))
       .where(eq(orderItems.orderId, id));
 
     return { ...order, items };
