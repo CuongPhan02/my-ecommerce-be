@@ -21,6 +21,7 @@ export async function userRoutes(fastify: FastifyInstance) {
   routeWithZod(fastify, {
     method: 'get',
     url: '/',
+    disableValidator: true,
     preHandler: adminAuth,
     swaggerSchema: {
       tags: [USER_TAG],
@@ -35,6 +36,7 @@ export async function userRoutes(fastify: FastifyInstance) {
   routeWithZod(fastify, {
     method: 'get',
     url: '/:id',
+    disableValidator: true,
     preHandler: adminAuth,
     swaggerSchema: {
       tags: [USER_TAG],
@@ -49,6 +51,7 @@ export async function userRoutes(fastify: FastifyInstance) {
   routeWithZod(fastify, {
     method: 'post',
     url: '/',
+    disableValidator: true,
     preHandler: adminAuth,
     swaggerSchema: {
       tags: [USER_TAG],
@@ -64,6 +67,7 @@ export async function userRoutes(fastify: FastifyInstance) {
   routeWithZod(fastify, {
     method: 'put',
     url: '/:id',
+    disableValidator: true,
     preHandler: adminAuth,
     swaggerSchema: {
       tags: [USER_TAG],
@@ -80,6 +84,7 @@ export async function userRoutes(fastify: FastifyInstance) {
   routeWithZod(fastify, {
     method: 'delete',
     url: '/:id',
+    disableValidator: true,
     preHandler: adminAuth,
     swaggerSchema: {
       tags: [USER_TAG],
@@ -94,6 +99,7 @@ export async function userRoutes(fastify: FastifyInstance) {
   routeWithZod(fastify, {
     method: 'post',
     url: '/bulk-delete',
+    disableValidator: true,
     preHandler: adminAuth,
     swaggerSchema: {
       tags: [USER_TAG],

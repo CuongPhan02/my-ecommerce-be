@@ -13,7 +13,10 @@ export function zodValidate(
     if (target === 'params') data = req.params;
 
     try {
-      await schema.parseAsync(data);
+      const parsedData = await schema.parseAsync(data);
+      if (target === 'body') (req as any).body = parsedData;
+      if (target === 'query') (req as any).query = parsedData;
+      if (target === 'params') (req as any).params = parsedData;
     } catch (error) {
       console.log(error, '*****');
       const zodError = fromZodError(error as z.ZodError);

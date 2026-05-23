@@ -104,6 +104,7 @@ export const authRoutes = (fastify: FastifyInstance) => {
   routeWithZod(fastify, {
     method: 'get',
     url: '/me',
+    disableValidator: true,
     preHandler: [authenticate],
     swaggerSchema: {
       tags: [AUTH_TAG],
