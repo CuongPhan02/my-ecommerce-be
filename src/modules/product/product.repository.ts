@@ -702,9 +702,10 @@ export class ProductRepository {
 
       if (values && values.length > 0) {
         await tx.insert(attributeValues).values(
-          values.map((value) => ({
+          values.map((v) => ({
             attributeId: attribute!.id,
-            value,
+            value: v.value,
+            name: v.name,
           }))
         );
       }
@@ -718,6 +719,9 @@ export class ProductRepository {
     const allAttributes = await this.db.query.attributes.findMany({
       limit: limit,
       offset: offset,
+      with: {
+        values: true,
+      },
     });
     const [total] = await this.db.select({ count: count() }).from(attributes);
     return {
@@ -729,16 +733,70 @@ export class ProductRepository {
   async getAttributeById(id: string) {
     return this.db.query.attributes.findFirst({
       where: eq(attributes.id, id),
+      with: {
+        values: true,
+      },
     });
   }
 
   async updateAttribute(id: string, data: UpdateAttributeInput) {
-    const [attribute] = await this.db
-      .update(attributes)
-      .set(data)
-      .where(eq(attributes.id, id))
-      .returning();
-    return attribute;
+    const { name, values } = data;
+
+    return await this.db.transaction(async (tx) => {
+      // 1. Update attribute name
+      let updatedAttribute;
+      if (name) {
+        [updatedAttribute] = await tx
+          .update(attributes)
+          .set({ name })
+          .where(eq(attributes.id, id))
+          .returning();
+      } else {
+        updatedAttribute = await tx.query.attributes.findFirst({
+          where: eq(attributes.id, id),
+        });
+      }
+
+      // 2. Sync values
+      if (values !== undefined) {
+        // Get existing values
+        const existingValues = await tx.query.attributeValues.findMany({
+          where: eq(attributeValues.attributeId, id),
+        });
+        const existingIds = existingValues.map((v) => v.id);
+        const incomingIds = values
+          .map((v) => v.id)
+          .filter((id): id is string => !!id);
+
+        // Delete values not in incoming list
+        const idsToDelete = existingIds.filter((id) => !incomingIds.includes(id));
+        if (idsToDelete.length > 0) {
+          await tx
+            .delete(attributeValues)
+            .where(inArray(attributeValues.id, idsToDelete));
+        }
+
+        // Update or Insert incoming values
+        for (const v of values) {
+          if (v.id && existingIds.includes(v.id)) {
+            // Update
+            await tx
+              .update(attributeValues)
+              .set({ value: v.value, name: v.name })
+              .where(eq(attributeValues.id, v.id));
+          } else {
+            // Insert
+            await tx.insert(attributeValues).values({
+              attributeId: id,
+              value: v.value,
+              name: v.name,
+            });
+          }
+        }
+      }
+
+      return updatedAttribute;
+    });
   }
 
   async deleteAttribute(id: string) {

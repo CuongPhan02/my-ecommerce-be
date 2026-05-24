@@ -185,11 +185,27 @@ import { attributes } from '@/db/schema';
 
 export const createAttributeSchema = z.object({
   name: z.string().min(1, 'Attribute name is required'),
-  values: z.array(z.string()).optional(),
+  values: z
+    .array(
+      z.object({
+        value: z.string().min(1),
+        name: z.string().optional(),
+      })
+    )
+    .optional(),
 });
 
-export const updateAttributeSchema = createInsertSchema(attributes).extend({
+export const updateAttributeSchema = z.object({
   name: z.string().min(1, 'Attribute name is required').optional(),
+  values: z
+    .array(
+      z.object({
+        id: z.string().optional(),
+        value: z.string().min(1),
+        name: z.string().optional(),
+      })
+    )
+    .optional(),
 });
 
 export const deleteAttributeSchema = z.object({

@@ -338,16 +338,31 @@ export const ATTRIBUTE_DOCUMENTATION = {
         name: { type: 'string', example: 'Color' },
         values: {
           type: 'array',
-          items: { type: 'string' },
-          example: ['Red', 'Blue', 'Green'],
+          items: {
+            type: 'object',
+            properties: {
+              value: { type: 'string', example: '#FF0000' },
+              name: { type: 'string', example: 'Red' },
+            },
+          },
         },
       },
     },
     UPDATE_ATTRIBUTE: {
       type: 'object',
-      required: ['name'],
       properties: {
         name: { type: 'string', example: 'Size' },
+        values: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              id: { type: 'string', description: 'ID of existing value to update' },
+              value: { type: 'string', example: 'XL' },
+              name: { type: 'string', example: 'Extra Large' },
+            },
+          },
+        },
       },
     },
     DELETE_MANY_ATTRIBUTES: DELETE_MANY_SCHEMA,

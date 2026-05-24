@@ -124,6 +124,7 @@ export const attributeValues = pgTable(
       .$defaultFn(() => cuid())
       .primaryKey(),
     value: text('value').notNull(),
+    name: text('name'),
     attributeId: text('attribute_id')
       .notNull()
       .references(() => attributes.id, { onDelete: 'cascade' }),
