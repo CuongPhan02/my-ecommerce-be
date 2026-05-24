@@ -1,6 +1,7 @@
 import { eq, desc, asc, ilike, or, and, count } from 'drizzle-orm';
 import { refundRequests, orders, users } from '@/db/schema';
 import { RefundQueryType } from './refund.validate';
+import { formatVND } from '@/utils/lib';
 
 export class RefundRepository {
   private db: any;
@@ -70,8 +71,17 @@ export class RefundRepository {
         .then((res: any[]) => res[0]?.count ?? 0),
     ]);
 
+    const formattedData = data.map((item: any) => ({
+      ...item,
+      amountFormatted: formatVND(item.amount),
+      order: item.order ? {
+        ...item.order,
+        totalAmountFormatted: formatVND(item.order.totalAmount),
+      } : null,
+    }));
+
     return {
-      data,
+      data: formattedData,
       total: totalResult,
     };
   }
@@ -107,7 +117,17 @@ export class RefundRepository {
       .where(eq(refundRequests.id, id))
       .limit(1);
 
-    return result[0];
+    const refund = result[0];
+    if (!refund) return null;
+
+    return {
+      ...refund,
+      amountFormatted: formatVND(refund.amount),
+      order: refund.order ? {
+        ...refund.order,
+        totalAmountFormatted: formatVND(refund.order.totalAmount),
+      } : null,
+    };
   }
 
   async findOrderById(orderId: string) {

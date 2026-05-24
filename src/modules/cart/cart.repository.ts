@@ -1,6 +1,7 @@
 import { Database } from '@/plugins/database';
 import { carts, cartItems, productVariants } from '@/db/schema';
 import { eq, and } from 'drizzle-orm';
+import { formatVND } from '@/utils/lib';
 
 export class CartRepository {
   private db: Database;
@@ -85,6 +86,7 @@ export class CartRepository {
           id: variant.id,
           sku: variant.sku,
           price: variant.price,
+          priceFormatted: formatVND(variant.price),
           stockQuantity: variant.stockQuantity,
           attributes: mappedAttributes,
         } : null,

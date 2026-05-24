@@ -2,6 +2,7 @@ import { Database } from '@/plugins/database';
 import { reviews, products, users, productVariants, orders } from '@/db/schema';
 import { eq, and, desc, asc, sql, or, like } from 'drizzle-orm';
 import { ReviewQueryType } from './review.validate';
+import { formatVND } from '@/utils/lib';
 
 export class ReviewRepository {
   private db: Database;
@@ -296,6 +297,7 @@ export class ReviewRepository {
             id: variant.id,
             sku: variant.sku,
             price: variant.price,
+            priceFormatted: formatVND(variant.price),
             attributes: mappedAttributes,
             label: variantLabel,
           }

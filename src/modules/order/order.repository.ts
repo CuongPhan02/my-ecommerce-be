@@ -4,6 +4,7 @@ import { users, addresses } from '@/db/schema/users';
 import { products, productVariants } from '@/db/schema/products';
 import { media } from '@/db/schema/media';
 import { GetOrdersQuery, UpdateOrderInput } from './order.validate';
+import { formatVND } from '@/utils/lib';
 
 export class OrderRepository {
   private db: any;
@@ -94,8 +95,26 @@ export class OrderRepository {
 
     const [rows, countRows] = await Promise.all([query, countQuery]);
 
+    const formattedOrders = rows.map(
+      (order: {
+        totalAmount: number;
+        discountAmount: any;
+        payment: { amount: number };
+      }) => ({
+        ...order,
+        totalAmountFormatted: formatVND(order.totalAmount),
+        discountAmountFormatted: formatVND(order.discountAmount || 0),
+        payment: order.payment
+          ? {
+              ...order.payment,
+              amountFormatted: formatVND(order.payment.amount),
+            }
+          : null,
+      })
+    );
+
     return {
-      orders: rows,
+      orders: formattedOrders,
       total: countRows.length,
     };
   }
@@ -164,12 +183,37 @@ export class OrderRepository {
         },
       })
       .from(orderItems)
-      .leftJoin(productVariants, eq(orderItems.productVariantId, productVariants.id))
+      .leftJoin(
+        productVariants,
+        eq(orderItems.productVariantId, productVariants.id)
+      )
       .leftJoin(products, eq(productVariants.productId, products.id))
       .leftJoin(media, eq(products.thumbnailId, media.id))
       .where(eq(orderItems.orderId, id));
 
-    return { ...order, items };
+    const formattedItems = items.map((item: any) => ({
+      ...item,
+      priceAtPurchaseFormatted: formatVND(item.priceAtPurchase),
+      variant: item.variant
+        ? {
+            ...item.variant,
+            priceFormatted: formatVND(item.variant.price),
+          }
+        : null,
+    }));
+
+    return {
+      ...order,
+      totalAmountFormatted: formatVND(order.totalAmount),
+      discountAmountFormatted: formatVND(order.discountAmount || 0),
+      payment: order.payment
+        ? {
+            ...order.payment,
+            amountFormatted: formatVND(order.payment.amount),
+          }
+        : null,
+      items: formattedItems,
+    };
   }
 
   // ======= UPDATE ORDER STATUS =======
@@ -225,7 +269,19 @@ export class OrderRepository {
       .from(orders)
       .where(eq(orders.userId, userId));
 
-    return { orders: rows, total: countRows.length };
+    const formattedOrders = rows.map((order: any) => ({
+      ...order,
+      totalAmountFormatted: formatVND(order.totalAmount),
+      discountAmountFormatted: formatVND(order.discountAmount || 0),
+      payment: order.payment
+        ? {
+            ...order.payment,
+            amountFormatted: formatVND(order.payment.amount),
+          }
+        : null,
+    }));
+
+    return { orders: formattedOrders, total: countRows.length };
   }
 
   // ======= GET MY ORDER BY ID =======

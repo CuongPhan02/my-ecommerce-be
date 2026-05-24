@@ -1,6 +1,7 @@
 import { eq, desc, asc, ilike, or, and, count, gt, lte } from 'drizzle-orm';
 import { productVariants, products, categories, users, inventoryTransactions } from '@/db/schema';
 import { InventoryQueryType, InventoryHistoryQueryType } from './inventory.validate';
+import { formatVND } from '@/utils/lib';
 
 export class InventoryRepository {
   private db: any;
@@ -82,8 +83,14 @@ export class InventoryRepository {
         .then((res: any[]) => res[0]?.count ?? 0),
     ]);
 
+    const formattedData = data.map((item: any) => ({
+      ...item,
+      priceFormatted: formatVND(item.price),
+      purchasePriceFormatted: formatVND(item.purchasePrice || 0),
+    }));
+
     return {
-      data,
+      data: formattedData,
       total: totalResult,
     };
   }
@@ -183,8 +190,13 @@ export class InventoryRepository {
         .then((res: any[]) => res[0]?.count ?? 0),
     ]);
 
+    const formattedData = data.map((item: any) => ({
+      ...item,
+      purchasePriceFormatted: item.purchasePrice ? formatVND(item.purchasePrice) : null,
+    }));
+
     return {
-      data,
+      data: formattedData,
       total: totalResult,
     };
   }

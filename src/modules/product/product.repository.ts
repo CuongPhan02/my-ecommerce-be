@@ -23,6 +23,7 @@ import {
   productAttributeOptions,
 } from '@/db/schema';
 import { ilike, and, or, isNull, gte, gt, lte, desc, asc, exists } from 'drizzle-orm';
+import { formatVND } from '@/utils/lib';
 
 export interface GetProductsFilter {
   page: number;
@@ -305,6 +306,7 @@ export class ProductRepository {
     const mappedVariants = (product.variants || []).map((v: any) => ({
       ...v,
       stock: v.stockQuantity,
+      priceFormatted: formatVND(v.price),
     }));
 
     const totalStock = mappedVariants.reduce(

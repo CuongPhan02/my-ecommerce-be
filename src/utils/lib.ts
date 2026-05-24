@@ -21,3 +21,15 @@ export function toMediaType(mimeType: string): MediaType {
       return 'OTHER';
   }
 }
+
+/**
+ * Format number to Vietnamese Dong (VND)
+ * @param amount - The number to format
+ * @returns Formatted string (e.g., 1.000.000 ₫)
+ */
+export function formatVND(amount: number): string {
+  return new Intl.NumberFormat('vi-VN', {
+    style: 'currency',
+    currency: 'VND',
+  }).format(amount);
+}

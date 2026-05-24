@@ -164,8 +164,10 @@ export const PRODUCT_DOCUMENTATION = {
             properties: {
               sku: { type: 'string', example: 'NK-001-RED-M' },
               price: { type: 'number', example: 250000 },
+              priceFormatted: { type: 'string', example: '250.000 ₫' },
               stock: { type: 'number', example: 100, default: 0 },
               purchasePrice: { type: 'number', example: 150000 },
+              purchasePriceFormatted: { type: 'string', example: '150.000 ₫' },
               lowStockQuantity: { type: 'number', example: 5, default: 0 },
               attributes: {
                 type: 'array',

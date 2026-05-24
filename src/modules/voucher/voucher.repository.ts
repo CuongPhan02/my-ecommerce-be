@@ -6,6 +6,7 @@ import {
 } from './voucher.validate';
 import { eq, count, ilike, and, desc, lte, gt, or, isNull } from 'drizzle-orm';
 import { vouchers } from '@/db/schema';
+import { formatVND } from '@/utils/lib';
 
 export class VoucherRepository {
   private db: Database;
@@ -22,19 +23,21 @@ export class VoucherRepository {
         expirationDate: expirationDate ? new Date(expirationDate) : null,
       })
       .returning();
-    return voucher;
+    return this.formatVoucher(voucher);
   }
 
   async findVoucherByCode(code: string) {
-    return this.db.query.vouchers.findFirst({
+    const voucher = await this.db.query.vouchers.findFirst({
       where: eq(vouchers.code, code),
     });
+    return this.formatVoucher(voucher);
   }
 
   async getVoucherById(id: string) {
-    return this.db.query.vouchers.findFirst({
+    const voucher = await this.db.query.vouchers.findFirst({
       where: eq(vouchers.id, id),
     });
+    return this.formatVoucher(voucher);
   }
 
   async getAllVouchers(query: GetVouchersQueryInput) {
@@ -70,7 +73,7 @@ export class VoucherRepository {
     const [total] = await this.db.select({ count: count() }).from(vouchers).where(and(...whereConditions));
 
     return {
-      vouchers: allVouchers,
+      vouchers: allVouchers.map(v => this.formatVoucher(v)),
       total: total?.count || 0,
     };
   }
@@ -88,7 +91,19 @@ export class VoucherRepository {
       .set(updatePayload)
       .where(eq(vouchers.id, id))
       .returning();
-    return voucher;
+    return this.formatVoucher(voucher);
+  }
+
+  private formatVoucher(voucher: any) {
+    if (!voucher) return null;
+    return {
+      ...voucher,
+      minOrderValueFormatted: formatVND(voucher.minOrderValue || 0),
+      discountValueFormatted:
+        voucher.type === 'FIXED'
+          ? formatVND(voucher.discountValue)
+          : `${voucher.discountValue}%`,
+    };
   }
 
   async deleteVoucher(id: string) {
