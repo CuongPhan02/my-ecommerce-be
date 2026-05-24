@@ -33,8 +33,11 @@ export interface GetProductsFilter {
   minPrice?: number | undefined;
   maxPrice?: number | undefined;
   sort?: 'price_asc' | 'price_desc' | 'newest' | 'oldest' | undefined;
-  brandId?: string;
-  isFlashSale?: boolean;
+  brandId?: string | undefined;
+  brandIds?: string[] | undefined;
+  collectionId?: string | undefined;
+  attributeValueIds?: string[] | undefined;
+  isFlashSale?: boolean | undefined;
 }
 
 export class ProductRepository {
@@ -331,6 +334,9 @@ export class ProductRepository {
       search,
       categoryId,
       brandId,
+      brandIds,
+      collectionId,
+      attributeValueIds,
       minPrice,
       maxPrice,
       sort,
@@ -351,6 +357,42 @@ export class ProductRepository {
 
     if (brandId) {
       whereConditions.push(eq(products.brandId, brandId));
+    }
+
+    if (brandIds && brandIds.length > 0) {
+      whereConditions.push(inArray(products.brandId, brandIds));
+    }
+
+    if (collectionId) {
+      whereConditions.push(
+        exists(
+          this.db
+            .select()
+            .from(productsToCollections)
+            .where(
+              and(
+                eq(productsToCollections.productId, products.id),
+                eq(productsToCollections.collectionId, collectionId)
+              )
+            )
+        )
+      );
+    }
+
+    if (attributeValueIds && attributeValueIds.length > 0) {
+      whereConditions.push(
+        exists(
+          this.db
+            .select()
+            .from(productAttributeOptions)
+            .where(
+              and(
+                eq(productAttributeOptions.productId, products.id),
+                inArray(productAttributeOptions.attributeValueId, attributeValueIds)
+              )
+            )
+        )
+      );
     }
 
     if (minPrice !== undefined || maxPrice !== undefined) {

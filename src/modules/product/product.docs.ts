@@ -17,7 +17,20 @@ export const PRODUCT_PAGINATION_QUERYSTRING = {
   properties: {
     ...PAGINATION_QUERYSTRING.properties,
     categoryId: { type: 'string', nullable: true },
-    brandId: { type: 'string', nullable: true },
+    brandId: { type: 'string', nullable: true, description: 'Single Brand ID' },
+    brandIds: {
+      type: 'array',
+      items: { type: 'string' },
+      nullable: true,
+      description: 'Multiple Brand IDs',
+    },
+    collectionId: { type: 'string', nullable: true },
+    attributeValueIds: {
+      type: 'array',
+      items: { type: 'string' },
+      nullable: true,
+      description: 'Multiple Attribute Value IDs',
+    },
     minPrice: { type: 'number', minimum: 0, nullable: true },
     maxPrice: { type: 'number', minimum: 0, nullable: true },
     sort: {

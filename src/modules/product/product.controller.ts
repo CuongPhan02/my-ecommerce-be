@@ -41,6 +41,9 @@ export const productController = (fastify: FastifyInstance) => {
           search?: string;
           categoryId?: string;
           brandId?: string;
+          brandIds?: string | string[];
+          collectionId?: string;
+          attributeValueIds?: string | string[];
           minPrice?: number;
           maxPrice?: number;
           sort?: 'price_asc' | 'price_desc' | 'newest' | 'oldest';
@@ -57,6 +60,19 @@ export const productController = (fastify: FastifyInstance) => {
           null
         );
       }
+
+      const brandIds = req.query.brandIds
+        ? Array.isArray(req.query.brandIds)
+          ? req.query.brandIds
+          : [req.query.brandIds]
+        : undefined;
+
+      const attributeValueIds = req.query.attributeValueIds
+        ? Array.isArray(req.query.attributeValueIds)
+          ? req.query.attributeValueIds
+          : [req.query.attributeValueIds]
+        : undefined;
+
       const result = await service.getAllProducts({
         page: Number(req.query.page),
         limit: Number(req.query.limit),
@@ -65,7 +81,10 @@ export const productController = (fastify: FastifyInstance) => {
         minPrice: req.query.minPrice ? Number(req.query.minPrice) : undefined,
         maxPrice: req.query.maxPrice ? Number(req.query.maxPrice) : undefined,
         sort: req.query.sort,
-        ...(req.query.brandId ? { brandId: req.query.brandId } : {}),
+        brandId: req.query.brandId,
+        brandIds,
+        collectionId: req.query.collectionId,
+        attributeValueIds,
       });
       return sendResponseSuccess(
         200,
