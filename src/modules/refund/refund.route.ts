@@ -24,6 +24,7 @@ export async function refundRoutes(fastify: FastifyInstance) {
       summary: REFUND_DOCUMENTATION.REFUND_SUMMARIES.GET_ALL_REFUNDS,
       description: REFUND_DOCUMENTATION.REFUND_DESCRIPTIONS.GET_ALL_REFUNDS,
     },
+    disableValidator: true,
     querySchema: refundQuerySchema,
     handler: controller.getAllRefundsHandler,
   });
@@ -38,6 +39,7 @@ export async function refundRoutes(fastify: FastifyInstance) {
       summary: REFUND_DOCUMENTATION.REFUND_SUMMARIES.GET_REFUND_DETAIL,
       description: REFUND_DOCUMENTATION.REFUND_DESCRIPTIONS.GET_REFUND_DETAIL,
     },
+    disableValidator: true,
     paramsSchema: refundParamSchema,
     handler: controller.getRefundByIdHandler,
   });
@@ -53,6 +55,7 @@ export async function refundRoutes(fastify: FastifyInstance) {
       description: REFUND_DOCUMENTATION.REFUND_DESCRIPTIONS.CREATE_REFUND,
       body: REFUND_DOCUMENTATION.REFUND_REQUEST_BODIES.CREATE_REFUND,
     },
+    disableValidator: true,
     bodySchema: createRefundSchema,
     handler: controller.createRefundHandler,
   });
@@ -68,6 +71,7 @@ export async function refundRoutes(fastify: FastifyInstance) {
       description: REFUND_DOCUMENTATION.REFUND_DESCRIPTIONS.APPROVE_REFUND,
       body: REFUND_DOCUMENTATION.REFUND_REQUEST_BODIES.APPROVE_REFUND,
     },
+    disableValidator: true,
     paramsSchema: refundParamSchema,
     bodySchema: approveRefundSchema,
     handler: controller.approveRefundHandler,
@@ -84,6 +88,7 @@ export async function refundRoutes(fastify: FastifyInstance) {
       description: REFUND_DOCUMENTATION.REFUND_DESCRIPTIONS.REJECT_REFUND,
       body: REFUND_DOCUMENTATION.REFUND_REQUEST_BODIES.REJECT_REFUND,
     },
+    disableValidator: true,
     paramsSchema: refundParamSchema,
     bodySchema: rejectRefundSchema,
     handler: controller.rejectRefundHandler,

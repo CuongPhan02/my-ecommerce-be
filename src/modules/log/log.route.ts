@@ -24,6 +24,7 @@ export default async function logRoute(fastify: FastifyInstance) {
       tags: [LOGS_TAG],
       security: [{ bearerAuth: [] }],
     },
+    disableValidator: true,
     handler: async (_, reply) => {
       const files = await fs.readdir(logDir);
       const logFiles = files.filter((f) => f.endsWith('.log'));
@@ -44,6 +45,7 @@ export default async function logRoute(fastify: FastifyInstance) {
       tags: [LOGS_TAG],
       security: [{ bearerAuth: [] }],
     },
+    disableValidator: true,
     handler: async (req, reply) => {
       const { filename } = req.params as { filename: string };
 
@@ -97,6 +99,7 @@ export default async function logRoute(fastify: FastifyInstance) {
       tags: [LOGS_TAG],
       security: [{ bearerAuth: [] }],
     },
+    disableValidator: true,
     handler: async (req, reply) => {
       const { filename } = req.params as { filename: string };
 
@@ -156,6 +159,7 @@ export default async function logRoute(fastify: FastifyInstance) {
       tags: [LOGS_TAG],
       security: [{ bearerAuth: [] }],
     },
+    disableValidator: true,
     handler: async (req, reply) => {
       const { filename } = req.params as { filename: string };
 

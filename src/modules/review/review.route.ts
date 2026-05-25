@@ -20,6 +20,7 @@ export async function reviewRoutes(fastify: FastifyInstance) {
     method: 'get',
     url: '/',
     preHandler: [authenticate, authorize(['ADMIN', 'SUPER_ADMIN'])],
+    disableValidator: true,
     swaggerSchema: {
       tags: [REVIEW_TAG],
       summary: REVIEW_DOCUMENTATION.REVIEW_SUMMARIES.GET_ADMIN_REVIEWS,
@@ -34,6 +35,7 @@ export async function reviewRoutes(fastify: FastifyInstance) {
     method: 'get',
     url: '/:id',
     preHandler: [authenticate, authorize(['ADMIN', 'SUPER_ADMIN'])],
+    disableValidator: true,
     swaggerSchema: {
       tags: [REVIEW_TAG],
       summary: REVIEW_DOCUMENTATION.REVIEW_SUMMARIES.GET_REVIEW_DETAIL,
@@ -48,6 +50,7 @@ export async function reviewRoutes(fastify: FastifyInstance) {
     method: 'post',
     url: '/',
     preHandler: [authenticate],
+    disableValidator: true,
     swaggerSchema: {
       tags: [REVIEW_TAG],
       summary: REVIEW_DOCUMENTATION.REVIEW_SUMMARIES.SUBMIT_REVIEW,
@@ -62,6 +65,7 @@ export async function reviewRoutes(fastify: FastifyInstance) {
   routeWithZod(fastify, {
     method: 'get',
     url: '/product/:productId',
+    disableValidator: true,
     swaggerSchema: {
       tags: [REVIEW_TAG],
       summary: REVIEW_DOCUMENTATION.REVIEW_SUMMARIES.GET_PRODUCT_REVIEWS,
@@ -76,6 +80,7 @@ export async function reviewRoutes(fastify: FastifyInstance) {
     method: 'put',
     url: '/:id/moderate',
     preHandler: [authenticate, authorize(['ADMIN', 'SUPER_ADMIN'])],
+    disableValidator: true,
     swaggerSchema: {
       tags: [REVIEW_TAG],
       summary: REVIEW_DOCUMENTATION.REVIEW_SUMMARIES.MODERATE_STATUS,
@@ -92,6 +97,7 @@ export async function reviewRoutes(fastify: FastifyInstance) {
     method: 'put',
     url: '/:id/reply',
     preHandler: [authenticate, authorize(['ADMIN', 'SUPER_ADMIN'])],
+    disableValidator: true,
     swaggerSchema: {
       tags: [REVIEW_TAG],
       summary: REVIEW_DOCUMENTATION.REVIEW_SUMMARIES.ADMIN_REPLY,
@@ -108,6 +114,7 @@ export async function reviewRoutes(fastify: FastifyInstance) {
     method: 'delete',
     url: '/:id',
     preHandler: [authenticate, authorize(['ADMIN', 'SUPER_ADMIN'])],
+    disableValidator: true,
     swaggerSchema: {
       tags: [REVIEW_TAG],
       summary: REVIEW_DOCUMENTATION.REVIEW_SUMMARIES.DELETE_REVIEW,

@@ -116,6 +116,7 @@ export default function mediaRoutes(fastify: FastifyInstance) {
   routeWithZod(fastify, {
     method: 'get',
     url: '/folders',
+    disableValidator: true,
     swaggerSchema: {
       tags: [MEDIA_FOLDER_TAG],
       summary: MEDIA_FOLDER_DOCUMENTATION.MEDIA_FOLDER_SUMMARIES.GET_ALL,
