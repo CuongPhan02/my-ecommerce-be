@@ -232,6 +232,16 @@ export const PRODUCT_DOCUMENTATION = {
           format: 'date-time',
           nullable: true,
         },
+        mediaIds: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Danh sách ID media ảnh sản phẩm',
+        },
+        collectionIds: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Danh sách ID bộ sưu tập',
+        },
         options: {
           type: 'array',
           description: 'Danh sách các thuộc tính và giá trị có sẵn của sản phẩm',

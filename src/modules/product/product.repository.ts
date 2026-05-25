@@ -19,6 +19,7 @@ import {
   products,
   productVariants,
   productsToCollections,
+  collections,
   brands,
   productAttributeOptions,
 } from '@/db/schema';
@@ -317,11 +318,18 @@ export class ProductRepository {
       0
     );
 
-    const { options, variants: oldVariants, tags, ...rest } = product;
+    const {
+      options,
+      variants: oldVariants,
+      tags,
+      collections: rawCollections,
+      ...rest
+    } = product;
     return {
       ...rest,
       options: groupedOptions,
       variants: mappedVariants,
+      collections: (rawCollections || []).map((c: any) => c.collection),
       stock: totalStock,
       tags: tags || [],
     };
@@ -364,19 +372,21 @@ export class ProductRepository {
     }
 
     if (collectionId) {
-      whereConditions.push(
-        exists(
-          this.db
-            .select()
-            .from(productsToCollections)
-            .where(
-              and(
-                eq(productsToCollections.productId, products.id),
-                eq(productsToCollections.collectionId, collectionId)
-              )
-            )
+      const collectionSubquery = this.db
+        .select({ productId: productsToCollections.productId })
+        .from(productsToCollections)
+        .innerJoin(
+          collections,
+          eq(productsToCollections.collectionId, collections.id)
         )
-      );
+        .where(
+          or(
+            eq(productsToCollections.collectionId, collectionId),
+            eq(collections.slug, collectionId)
+          )
+        );
+
+      whereConditions.push(inArray(products.id, collectionSubquery));
     }
 
     if (attributeValueIds && attributeValueIds.length > 0) {
@@ -388,7 +398,10 @@ export class ProductRepository {
             .where(
               and(
                 eq(productAttributeOptions.productId, products.id),
-                inArray(productAttributeOptions.attributeValueId, attributeValueIds)
+                inArray(
+                  productAttributeOptions.attributeValueId,
+                  attributeValueIds
+                )
               )
             )
         )
@@ -421,8 +434,14 @@ export class ProductRepository {
       whereConditions.push(
         and(
           gt(products.discountValue, 0), // Has discount
-          or(isNull(products.discountStartDate), lte(products.discountStartDate, now)), // Started or no start date
-          or(isNull(products.discountEndDate), gte(products.discountEndDate, now)) // Not yet ended or no end date
+          or(
+            isNull(products.discountStartDate),
+            lte(products.discountStartDate, now)
+          ), // Started or no start date
+          or(
+            isNull(products.discountEndDate),
+            gte(products.discountEndDate, now)
+          ) // Not yet ended or no end date
         )
       );
     }
@@ -557,17 +576,18 @@ export class ProductRepository {
       // 1. Prepare and Update basic product info
       const updatePayload: Record<string, any> = { ...productData };
       if (discountStartDate !== undefined) {
-        updatePayload.discountStartDate = discountStartDate ? new Date(discountStartDate) : null;
+        updatePayload.discountStartDate = discountStartDate
+          ? new Date(discountStartDate)
+          : null;
       }
       if (discountEndDate !== undefined) {
-        updatePayload.discountEndDate = discountEndDate ? new Date(discountEndDate) : null;
+        updatePayload.discountEndDate = discountEndDate
+          ? new Date(discountEndDate)
+          : null;
       }
 
       if (Object.keys(updatePayload).length > 0) {
-        await tx
-          .update(products)
-          .set(updatePayload)
-          .where(eq(products.id, id));
+        await tx.update(products).set(updatePayload).where(eq(products.id, id));
       }
 
       // 2. Update Options (Sync)
@@ -626,7 +646,25 @@ export class ProductRepository {
         }
       }
 
-      // 3. Variant/Media Sync can be added here if needed in the future
+      // 3. Update Collections (Sync)
+      if (collectionIds !== undefined) {
+        // Delete existing associations
+        await tx
+          .delete(productsToCollections)
+          .where(eq(productsToCollections.productId, id));
+
+        // Insert new associations
+        if (collectionIds && collectionIds.length > 0) {
+          await tx.insert(productsToCollections).values(
+            collectionIds.map((collectionId) => ({
+              productId: id,
+              collectionId,
+            }))
+          );
+        }
+      }
+
+      // 4. Variant/Media Sync can be added here if needed in the future
 
       return this.getProductById(id);
     });
