@@ -41,13 +41,38 @@ export class VoucherRepository {
   }
 
   async getAllVouchers(query: GetVouchersQueryInput) {
-    const { page = 1, limit = 10, search, status } = query;
+    const {
+      page = 1,
+      limit = 10,
+      search,
+      status,
+      type,
+      isActive,
+      minDiscountValue,
+      maxDiscountValue,
+    } = query;
     const offset = (page - 1) * limit;
 
     const whereConditions = [];
 
     if (search) {
       whereConditions.push(ilike(vouchers.code, `%${search}%`));
+    }
+
+    if (type) {
+      whereConditions.push(eq(vouchers.type, type));
+    }
+
+    if (isActive !== undefined) {
+      whereConditions.push(eq(vouchers.isActive, isActive));
+    }
+
+    if (minDiscountValue !== undefined) {
+      whereConditions.push(gt(vouchers.discountValue, minDiscountValue));
+    }
+
+    if (maxDiscountValue !== undefined) {
+      whereConditions.push(lte(vouchers.discountValue, maxDiscountValue));
     }
 
     const now = new Date();
@@ -60,7 +85,7 @@ export class VoucherRepository {
     } else if (status === 'PAUSED') {
       whereConditions.push(eq(vouchers.isActive, false));
     } else if (status === 'EXPIRED') {
-       whereConditions.push(lte(vouchers.expirationDate, now));
+      whereConditions.push(lte(vouchers.expirationDate, now));
     }
 
     const allVouchers = await this.db.query.vouchers.findMany({
@@ -70,10 +95,13 @@ export class VoucherRepository {
       orderBy: [desc(vouchers.createdAt)],
     });
 
-    const [total] = await this.db.select({ count: count() }).from(vouchers).where(and(...whereConditions));
+    const [total] = await this.db
+      .select({ count: count() })
+      .from(vouchers)
+      .where(and(...whereConditions));
 
     return {
-      vouchers: allVouchers.map(v => this.formatVoucher(v)),
+      vouchers: allVouchers.map((v) => this.formatVoucher(v)),
       total: total?.count || 0,
     };
   }

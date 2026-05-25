@@ -40,6 +40,7 @@ export const voucherRoutes = async (fastify: FastifyInstance) => {
       summary: VOUCHER_DOCUMENTATION.VOUCHER_SUMMARIES.GET_VOUCHERS,
       description: VOUCHER_DOCUMENTATION.VOUCHER_DESCRIPTIONS.GET_VOUCHERS,
       tags: [VOUCHER_TAG],
+      querystring: VOUCHER_DOCUMENTATION.VOUCHER_QUERYSTRING,
     },
     preHandler: [authenticate],
     roles: [ROLE_NAME.ADMIN, ROLE_NAME.SUPER_ADMIN],

@@ -37,10 +37,17 @@ export const toggleVoucherStatusSchema = z.object({
 });
 
 export const getVouchersQuerySchema = z.object({
-  page: z.string().regex(/^\d+$/).transform(Number).optional().default(1),
-  limit: z.string().regex(/^\d+$/).transform(Number).optional().default(10),
+  page: z.coerce.number().int().min(1).optional().default(1),
+  limit: z.coerce.number().int().min(1).max(100).optional().default(10),
   search: z.string().optional(),
   status: z.enum(['ACTIVE', 'PAUSED', 'EXPIRED']).optional(),
+  type: z.enum(['PERCENTAGE', 'FIXED', 'FREE_SHIPPING']).optional(),
+  isActive: z.preprocess(
+    (val) => (val === 'true' ? true : val === 'false' ? false : val),
+    z.boolean().optional()
+  ),
+  minDiscountValue: z.coerce.number().min(0).optional(),
+  maxDiscountValue: z.coerce.number().min(0).optional(),
 });
 
 export type CreateVoucherInput = z.infer<typeof createVoucherSchema>;

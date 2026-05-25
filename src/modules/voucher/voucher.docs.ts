@@ -11,11 +11,24 @@ export const VOUCHER_DOCUMENTATION = {
   },
   VOUCHER_DESCRIPTIONS: {
     CREATE_VOUCHER: 'Create a new voucher/discount code with conditions',
-    GET_VOUCHERS: 'Fetch vouchers with optional filtering by status and search by code',
+    GET_VOUCHERS: 'Fetch vouchers with advanced filtering options',
     GET_VOUCHER_BY_ID: 'Retrieve detailed information of a specific voucher',
     UPDATE_VOUCHER: 'Modify properties of an existing voucher',
     DELETE_VOUCHER: 'Remove a voucher completely',
     TOGGLE_STATUS: 'Enable or disable a voucher immediately',
+  },
+  VOUCHER_QUERYSTRING: {
+    type: 'object',
+    properties: {
+      page: { type: 'number', default: 1 },
+      limit: { type: 'number', default: 10 },
+      search: { type: 'string', description: 'Search by voucher code' },
+      status: { type: 'string', enum: ['ACTIVE', 'PAUSED', 'EXPIRED'] },
+      type: { type: 'string', enum: ['PERCENTAGE', 'FIXED', 'FREE_SHIPPING'] },
+      isActive: { type: 'boolean' },
+      minDiscountValue: { type: 'number' },
+      maxDiscountValue: { type: 'number' },
+    },
   },
   VOUCHER_REQUEST_BODIES: {
     CREATE_VOUCHER: {
