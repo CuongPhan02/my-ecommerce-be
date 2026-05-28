@@ -83,6 +83,12 @@ export const ORDER_DOCUMENTATION = {
           example: 'SALE10',
           description: 'Mã giảm giá áp dụng (nếu có)',
         },
+        paymentMethod: {
+          type: 'string',
+          enum: ['COD', 'VNPAY'],
+          example: 'COD',
+          description: 'Phương thức thanh toán: COD (Thanh toán khi nhận hàng) hoặc VNPAY (Thanh toán trực tuyến)',
+        },
         shippingName: {
           type: 'string',
           example: 'Nguyễn Văn A',
