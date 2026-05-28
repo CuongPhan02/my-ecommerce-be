@@ -41,6 +41,7 @@ export const createOrderSchema = z
   .object({
     shippingAddressId: z.string().optional(),
     couponCode: z.string().optional(),
+    paymentMethod: z.enum(['COD', 'VNPAY']).optional().default('COD'),
 
     // Thông tin giao hàng tùy chỉnh
     shippingName: z.string().optional(),

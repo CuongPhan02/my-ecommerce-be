@@ -334,6 +334,7 @@ export class OrderRepository {
       postalCode: string;
       country: string;
     } | undefined;
+    paymentMethod: string;
     items: { productVariantId: string; quantity: number; priceAtPurchase: number }[];
     cartId: string;
   }) {
@@ -409,7 +410,15 @@ export class OrderRepository {
 
       await tx.insert(orderItems).values(orderItemsValues);
 
-      // 5. Xóa giỏ hàng của người dùng
+      // 5. Tạo bản ghi thanh toán tương ứng
+      await tx.insert(payments).values({
+        amount: data.totalAmount,
+        method: data.paymentMethod,
+        orderId: newOrder.id,
+        status: 'PENDING',
+      });
+
+      // 6. Xóa giỏ hàng của người dùng
       await tx.delete(cartItems).where(eq(cartItems.cartId, data.cartId));
 
       return newOrder;

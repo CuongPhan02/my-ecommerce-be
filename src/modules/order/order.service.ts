@@ -149,6 +149,7 @@ export class OrderService {
       couponId,
       shippingAddressId,
       customAddress,
+      paymentMethod: data.paymentMethod || 'COD',
       items: orderItemsData,
       cartId: cart.id,
     });
