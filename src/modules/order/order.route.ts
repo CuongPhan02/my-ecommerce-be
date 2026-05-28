@@ -7,7 +7,7 @@ import {
   ORDER_PAGINATION_QUERYSTRING,
   ORDER_DOCUMENTATION,
 } from './order.docs';
-import { updateOrderSchema } from './order.validate';
+import { updateOrderSchema, createOrderSchema } from './order.validate';
 import { orderController } from './order.controller';
 
 export const orderRoutes = (fastify: FastifyInstance) => {
@@ -94,5 +94,35 @@ export const orderRoutes = (fastify: FastifyInstance) => {
     },
     preHandler: [authenticate],
     handler: controller.getMyOrderByIdHandler,
+  });
+
+  // ======= USER: ĐẶT HÀNG MỚI (CHECKOUT) ======= //
+  routeWithZod(fastify, {
+    url: '/',
+    method: 'post',
+    disableValidator: true,
+    swaggerSchema: {
+      body: ORDER_DOCUMENTATION.ORDER_REQUEST_BODIES.CREATE_ORDER,
+      summary: ORDER_DOCUMENTATION.ORDER_SUMMARIES.CREATE_ORDER,
+      description: ORDER_DOCUMENTATION.ORDER_DESCRIPTIONS.CREATE_ORDER,
+      tags: [ORDER_TAG],
+      security: [{ bearerAuth: [] }],
+    },
+    preHandler: [authenticate],
+    bodySchema: createOrderSchema,
+    handler: controller.createOrderHandler,
+  });
+
+  // ======= PUBLIC: THEO DÕI ĐƠN HÀNG (KHÔNG CẦN ĐĂNG NHẬP) ======= //
+  routeWithZod(fastify, {
+    url: '/track/:id',
+    method: 'get',
+    disableValidator: true,
+    swaggerSchema: {
+      summary: ORDER_DOCUMENTATION.ORDER_SUMMARIES.TRACK_ORDER,
+      description: ORDER_DOCUMENTATION.ORDER_DESCRIPTIONS.TRACK_ORDER,
+      tags: [ORDER_TAG],
+    },
+    handler: controller.trackOrderHandler,
   });
 };

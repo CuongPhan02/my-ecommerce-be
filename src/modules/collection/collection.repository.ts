@@ -14,6 +14,7 @@ const PRODUCT_WITH_RELATIONS = {
         brand: true,
         thumbnail: true,
         metaImage: true,
+        variants: true,
         images: {
           with: {
             media: true,

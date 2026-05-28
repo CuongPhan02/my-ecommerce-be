@@ -2,7 +2,7 @@ import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { sendResponseSuccess } from '@/utils/sendResponse';
 import { OrderService } from './order.service';
 import { OrderRepository } from './order.repository';
-import { GetOrdersQuery, UpdateOrderInput } from './order.validate';
+import { GetOrdersQuery, UpdateOrderInput, CreateOrderInput } from './order.validate';
 
 export const orderController = (fastify: FastifyInstance) => {
   const repo = new OrderRepository(fastify.db);
@@ -67,6 +67,25 @@ export const orderController = (fastify: FastifyInstance) => {
       const userId = (req as any).user?.id;
       const result = await service.getMyOrderById(req.params.id, userId);
       return sendResponseSuccess(200, reply, 'Get my order detail success', result);
+    },
+
+    // ===== USER: ĐẶT HÀNG MỚI (CHECKOUT) =====
+    createOrderHandler: async (
+      req: FastifyRequest<{ Body: CreateOrderInput }>,
+      reply: FastifyReply
+    ) => {
+      const userId = (req as any).user?.id;
+      const result = await service.createOrder(userId, req.body);
+      return sendResponseSuccess(201, reply, 'Đặt hàng thành công', result);
+    },
+
+    // ===== PUBLIC: Theo dõi đơn hàng (Không cần đăng nhập) =====
+    trackOrderHandler: async (
+      req: FastifyRequest<{ Params: { id: string } }>,
+      reply: FastifyReply
+    ) => {
+      const result = await service.getOrderById(req.params.id);
+      return sendResponseSuccess(200, reply, 'Theo dõi đơn hàng thành công', result);
     },
   };
 };

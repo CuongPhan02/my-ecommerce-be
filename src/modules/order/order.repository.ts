@@ -1,5 +1,5 @@
 import { and, asc, desc, eq, ilike, or } from 'drizzle-orm';
-import { orders, orderItems, payments } from '@/db/schema/orders';
+import { orders, orderItems, payments, carts, cartItems, coupons } from '@/db/schema/orders';
 import { users, addresses } from '@/db/schema/users';
 import { products, productVariants } from '@/db/schema/products';
 import { media } from '@/db/schema/media';
@@ -290,5 +290,129 @@ export class OrderRepository {
     // Kiểm tra đơn hàng thuộc về user
     if (!order || (order as any).customer?.id !== userId) return null;
     return order;
+  }
+
+  // ======= TIỂM KIẾM GIỎ HÀNG ĐANG HOẠT ĐỘNG =======
+  async findActiveCartWithItems(userId: string) {
+    return this.db.query.carts.findFirst({
+      where: eq(carts.userId, userId),
+      with: {
+        items: {
+          with: {
+            productVariant: true,
+          },
+        },
+      },
+    });
+  }
+
+  // ======= TÌM KIẾM COUPON THEO MÃ =======
+  async findCouponByCode(code: string) {
+    return this.db.query.coupons.findFirst({
+      where: eq(coupons.code, code),
+    });
+  }
+
+  // ======= TÌM KIẾM ĐỊA CHỈ GIAO HÀNG =======
+  async findAddressById(id: string, userId: string) {
+    return this.db.query.addresses.findFirst({
+      where: and(eq(addresses.id, id), eq(addresses.userId, userId)),
+    });
+  }
+
+  // ======= THỰC THI GIAO DỊCH TẠO ĐƠN HÀNG =======
+  async executeOrderTransaction(data: {
+    userId: string;
+    totalAmount: number;
+    discountAmount: number;
+    couponId: string | null;
+    shippingAddressId?: string | undefined;
+    customAddress?: {
+      street: string;
+      city: string;
+      province: string;
+      postalCode: string;
+      country: string;
+    } | undefined;
+    items: { productVariantId: string; quantity: number; priceAtPurchase: number }[];
+    cartId: string;
+  }) {
+    return this.db.transaction(async (tx: any) => {
+      // 1. Khấu trừ tồn kho cho từng sản phẩm
+      for (const item of data.items) {
+        const [variant] = await tx
+          .select({ stockQuantity: productVariants.stockQuantity })
+          .from(productVariants)
+          .where(eq(productVariants.id, item.productVariantId));
+
+        if (!variant || (variant.stockQuantity ?? 0) < item.quantity) {
+          throw new Error(`Variant ${item.productVariantId} is out of stock`);
+        }
+
+        await tx
+          .update(productVariants)
+          .set({
+            stockQuantity: (variant.stockQuantity ?? 0) - item.quantity,
+          })
+          .where(eq(productVariants.id, item.productVariantId));
+      }
+
+      // 2. Nếu không có shippingAddressId, tiến hành tạo mới địa chỉ giao hàng tùy chỉnh
+      let finalAddressId = data.shippingAddressId;
+      if (!finalAddressId && data.customAddress) {
+        const [newAddr] = await tx
+          .insert(addresses)
+          .values({
+            userId: data.userId,
+            street: data.customAddress.street,
+            city: data.customAddress.city,
+            province: data.customAddress.province,
+            postalCode: data.customAddress.postalCode,
+            country: data.customAddress.country,
+            isDefault: false,
+          })
+          .returning();
+        if (!newAddr) {
+          throw new Error('Failed to create custom shipping address');
+        }
+        finalAddressId = newAddr.id;
+      }
+
+      if (!finalAddressId) {
+        throw new Error('Shipping address is required');
+      }
+
+      // 3. Tạo đơn hàng mới
+      const [newOrder] = await tx
+        .insert(orders)
+        .values({
+          userId: data.userId,
+          totalAmount: data.totalAmount,
+          discountAmount: data.discountAmount,
+          couponId: data.couponId,
+          shippingAddressId: finalAddressId,
+          status: 'PENDING',
+        })
+        .returning();
+
+      if (!newOrder) {
+        throw new Error('Failed to create order');
+      }
+
+      // 4. Tạo chi tiết đơn hàng (Order Items)
+      const orderItemsValues = data.items.map((item) => ({
+        orderId: newOrder.id,
+        productVariantId: item.productVariantId,
+        quantity: item.quantity,
+        priceAtPurchase: item.priceAtPurchase,
+      }));
+
+      await tx.insert(orderItems).values(orderItemsValues);
+
+      // 5. Xóa giỏ hàng của người dùng
+      await tx.delete(cartItems).where(eq(cartItems.cartId, data.cartId));
+
+      return newOrder;
+    });
   }
 }

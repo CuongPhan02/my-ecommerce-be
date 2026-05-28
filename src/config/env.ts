@@ -79,6 +79,12 @@ const envSchema = z.object({
     .string()
     .optional()
     .transform((val) => val?.trim()),
+
+  // --- VNPAY Payment Gateway ---
+  VNP_TMN_CODE: z.string().min(1, 'VNP_TMN_CODE is required'),
+  VNP_HASH_SECRET: z.string().min(1, 'VNP_HASH_SECRET is required'),
+  VNP_URL: z.url('VNP_URL must be a valid URL'),
+  VNP_RETURN_URL: z.url('VNP_RETURN_URL must be a valid URL'),
 });
 
 // Parse and Validate
