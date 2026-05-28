@@ -159,48 +159,80 @@ export class ProductRepository {
       const productId = newProduct.id;
       const { options } = data;
 
+      // Cache for attributes and their values to avoid redundant queries/inserts and unique constraint conflicts
+      const attributeCache = new Map<string, string>(); // name -> id
+      const attributeValueCache = new Map<string, string>(); // `${attributeId}:${value}` -> id
+
+      const getOrCreateAttribute = async (name: string): Promise<string> => {
+        const cachedId = attributeCache.get(name);
+        if (cachedId) return cachedId;
+
+        let attr = await tx.query.attributes.findFirst({
+          where: eq(attributes.name, name),
+        });
+
+        if (!attr) {
+          const [newAttr] = await tx
+            .insert(attributes)
+            .values({ name })
+            .returning();
+          attr = newAttr;
+        }
+
+        if (!attr) {
+          throw new Error(`Failed to create attribute: ${name}`);
+        }
+
+        attributeCache.set(name, attr.id);
+        return attr.id;
+      };
+
+      const getOrCreateAttributeValue = async (attributeId: string, value: string): Promise<string> => {
+        const cacheKey = `${attributeId}:${value}`;
+        const cachedId = attributeValueCache.get(cacheKey);
+        if (cachedId) return cachedId;
+
+        let val = await tx.query.attributeValues.findFirst({
+          where: and(
+            eq(attributeValues.attributeId, attributeId),
+            eq(attributeValues.value, value)
+          ),
+        });
+
+        if (!val) {
+          const [newVal] = await tx
+            .insert(attributeValues)
+            .values({
+              attributeId,
+              value,
+            })
+            .returning();
+          val = newVal;
+        }
+
+        if (!val) {
+          throw new Error(`Failed to create attribute value: ${value}`);
+        }
+
+        attributeValueCache.set(cacheKey, val.id);
+        return val.id;
+      };
+
       // 1.5. Create Product Options (If any)
       if (options && options.length > 0) {
         for (const option of options) {
-          // Find or create attribute
-          let attr = await tx.query.attributes.findFirst({
-            where: eq(attributes.name, option.name),
-          });
-
-          if (!attr) {
-            const [newAttr] = await tx
-              .insert(attributes)
-              .values({ name: option.name })
-              .returning();
-            attr = newAttr;
-          }
+          const attrId = await getOrCreateAttribute(option.name);
 
           // Handle values
           for (const valName of option.values) {
-            let val = await tx.query.attributeValues.findFirst({
-              where: and(
-                eq(attributeValues.attributeId, attr!.id),
-                eq(attributeValues.value, valName)
-              ),
-            });
-
-            if (!val) {
-              const [newVal] = await tx
-                .insert(attributeValues)
-                .values({
-                  attributeId: attr!.id,
-                  value: valName,
-                })
-                .returning();
-              val = newVal;
-            }
+            const valId = await getOrCreateAttributeValue(attrId, valName);
 
             // Link to Product
             await tx
               .insert(productAttributeOptions)
               .values({
                 productId,
-                attributeValueId: val!.id,
+                attributeValueId: valId,
               })
               .onConflictDoNothing();
           }
@@ -218,58 +250,17 @@ export class ProductRepository {
               sku: variant.sku,
               price: variant.price,
               stockQuantity: variant.stock,
+              purchasePrice: variant.purchasePrice ?? 0,
+              lowStockQuantity: variant.lowStockQuantity ?? 0,
             })
             .returning();
 
           // 3.2 Handle Attributes
           if (variant.attributes && variant.attributes.length > 0) {
             for (const attr of variant.attributes) {
-              // Find or Create Attribute (e.g., "Color")
-              let attributeId: string;
-              const existingAttr = await tx.query.attributes.findFirst({
-                where: eq(attributes.name, attr.name),
-              });
+              const attributeId = await getOrCreateAttribute(attr.name);
+              const valueId = await getOrCreateAttributeValue(attributeId, attr.value);
 
-              if (existingAttr) {
-                attributeId = existingAttr.id;
-              } else {
-                const [createdAttr] = await tx
-                  .insert(attributes)
-                  .values({ name: attr.name })
-                  .returning();
-
-                if (!createdAttr) {
-                  throw new Error(`Failed to create attribute: ${attr.name}`);
-                }
-                attributeId = createdAttr.id;
-              }
-
-              // Find or Create Attribute Value (e.g., "Red")
-              let valueId: string | undefined;
-              // Check if value exists for this attribute
-              // Note: We need to use DB query carefully inside transaction
-              const existingValue = await tx.query.attributeValues.findFirst({
-                where: (val, { and, eq }) =>
-                  and(
-                    eq(val.attributeId, attributeId),
-                    eq(val.value, attr.value)
-                  ),
-              });
-
-              if (existingValue) {
-                valueId = existingValue.id;
-              } else if (attributeId) {
-                const [createdValue] = await tx
-                  .insert(attributeValues)
-                  .values({
-                    attributeId,
-                    value: attr.value,
-                  })
-                  .returning();
-                if (createdValue) {
-                  valueId = createdValue.id;
-                }
-              }
               if (valueId && newVariant) {
                 // 3.3 Link Attribute Value to Variant
                 await tx.insert(attributeValuesToVariants).values({

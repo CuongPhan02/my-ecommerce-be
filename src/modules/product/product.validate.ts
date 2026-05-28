@@ -9,8 +9,8 @@ const productVariantSchema = z.object({
   sku: z.string().min(1, 'SKU is required'),
   price: z.number().min(0, 'Price must be positive'),
   stock: z.number().int().min(0).default(0),
-  purchasePrice: z.number().min(0, 'Purchase price must be positive'),
-  lowStockQuantity: z.number().int().min(0).default(0),
+  purchasePrice: z.number().min(0, 'Purchase price must be positive').nullable().optional().default(0),
+  lowStockQuantity: z.number().int().min(0).nullable().optional().default(0),
   attributes: z
     .array(
       z.object({
