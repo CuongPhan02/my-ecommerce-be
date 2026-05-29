@@ -223,8 +223,20 @@ export class ProductRepository {
         for (const option of options) {
           const attrId = await getOrCreateAttribute(option.name);
 
+          // Deduplicate option values case-insensitively while preserving original casing
+          const uniqueValues: string[] = [];
+          const seenValues = new Set<string>();
+          for (const val of option.values) {
+            const trimmed = val.trim();
+            const lower = trimmed.toLowerCase();
+            if (!seenValues.has(lower)) {
+              seenValues.add(lower);
+              uniqueValues.push(trimmed);
+            }
+          }
+
           // Handle values
-          for (const valName of option.values) {
+          for (const valName of uniqueValues) {
             const valId = await getOrCreateAttributeValue(attrId, valName);
 
             // Link to Product
@@ -241,13 +253,62 @@ export class ProductRepository {
 
       // 2. Create Variants
       if (variants && variants.length > 0) {
+        // Deduplicate variants in request body to prevent duplicate inserts
+        const uniqueVariants: NonNullable<CreateProductInput['variants']> = [];
+        const seenSkus = new Set<string>();
+        const seenAttributesStr = new Set<string>();
+
         for (const variant of variants) {
+          const trimmedSku = variant.sku.trim();
+          const lowerSku = trimmedSku.toLowerCase();
+
+          // Generate a canonical string representing the variant's attributes
+          const attributesStr = variant.attributes
+            ? [...variant.attributes]
+                .sort((a, b) => a.name.localeCompare(b.name))
+                .map(a => `${a.name.toLowerCase().trim()}:${a.value.toLowerCase().trim()}`)
+                .join(',')
+            : '';
+
+          // Skip duplicate SKUs in the same request
+          if (seenSkus.has(lowerSku)) {
+            continue;
+          }
+          // Skip duplicate attribute combinations in the same request
+          if (attributesStr && seenAttributesStr.has(attributesStr)) {
+            continue;
+          }
+
+          seenSkus.add(lowerSku);
+          if (attributesStr) {
+            seenAttributesStr.add(attributesStr);
+          }
+          uniqueVariants.push(variant);
+        }
+
+        for (const variant of uniqueVariants) {
+          let finalSku = variant.sku.trim();
+
+          // Check if the SKU already exists globally in the database
+          let existVariant = await tx.query.productVariants.findFirst({
+            where: eq(productVariants.sku, finalSku),
+          });
+
+          // If SKU already exists globally, append a unique suffix to keep it unique
+          while (existVariant) {
+            const randomSuffix = Math.random().toString(36).substring(2, 6).toUpperCase();
+            finalSku = `${variant.sku.trim()}-${randomSuffix}`;
+            existVariant = await tx.query.productVariants.findFirst({
+              where: eq(productVariants.sku, finalSku),
+            });
+          }
+
           // 3.1 Create Variant
           const [newVariant] = await tx
             .insert(productVariants)
             .values({
               productId: newProduct.id,
-              sku: variant.sku,
+              sku: finalSku,
               price: variant.price,
               stockQuantity: variant.stock,
               purchasePrice: variant.purchasePrice ?? 0,
