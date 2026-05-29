@@ -48,6 +48,14 @@ export class PaymentService {
     const createDate = formatDate(date);
     const amount = Math.round(order.totalAmount * 100); // Nhân 100 theo yêu cầu VNPAY
 
+    // Chuẩn hóa địa chỉ IP (chỉ chấp nhận IPv4)
+    let cleanIp = ipAddress || '127.0.0.1';
+    if (cleanIp === '::1' || cleanIp === '::') {
+      cleanIp = '127.0.0.1';
+    } else if (cleanIp.startsWith('::ffff:')) {
+      cleanIp = cleanIp.substring(7);
+    }
+
     const vnpParams: Record<string, string> = {
       vnp_Version: '2.1.0',
       vnp_Command: 'pay',
@@ -55,11 +63,11 @@ export class PaymentService {
       vnp_Locale: data.language || 'vn',
       vnp_CurrCode: 'VND',
       vnp_TxnRef: order.id,
-      vnp_OrderInfo: `Thanh toan don hang #${order.id}`,
+      vnp_OrderInfo: `Thanh toan don hang ${order.id}`,
       vnp_OrderType: 'billpayment',
       vnp_Amount: amount.toString(),
       vnp_ReturnUrl: ENV_CONFIG.VNP_RETURN_URL,
-      vnp_IpAddr: ipAddress || '127.0.0.1',
+      vnp_IpAddr: cleanIp,
       vnp_CreateDate: createDate,
     };
 

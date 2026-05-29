@@ -14,12 +14,19 @@ export const paymentController = (fastify: FastifyInstance) => {
       req: FastifyRequest<{ Body: CreatePaymentUrlInput }>,
       reply: FastifyReply
     ) => {
-      // Lấy IP của Client để gửi cho VNPAY
+      // Lấy IP của Client để gửi cho VNPAY (VNPAY chỉ chấp nhận IPv4)
       const xForwardedFor = req.headers['x-forwarded-for'] as string | undefined;
-      const ipAddress =
+      let ipAddress =
         xForwardedFor?.split(',')[0]?.trim() ||
         req.socket?.remoteAddress ||
         '127.0.0.1';
+
+      // Chuẩn hóa địa chỉ IPv6 thành IPv4 cho môi trường local
+      if (ipAddress === '::1' || ipAddress === '::') {
+        ipAddress = '127.0.0.1';
+      } else if (ipAddress.startsWith('::ffff:')) {
+        ipAddress = ipAddress.substring(7);
+      }
 
       const paymentUrl = await service.createPaymentUrl(req.body, ipAddress);
       return sendResponseSuccess(201, reply, 'Payment URL created successfully', {
