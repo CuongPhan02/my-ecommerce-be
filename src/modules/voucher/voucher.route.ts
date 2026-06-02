@@ -17,6 +17,39 @@ export const voucherRoutes = async (fastify: FastifyInstance) => {
   const controller = voucherController(fastify);
 
   routeWithZod(fastify, {
+    url: '/public',
+    method: 'get',
+    disableValidator: true,
+    swaggerSchema: {
+      summary: 'Get active vouchers for users',
+      description: 'Retrieve all currently active and non-expired vouchers',
+      tags: [VOUCHER_TAG],
+    },
+    handler: controller.getPublicVouchersHandler,
+  });
+
+  routeWithZod(fastify, {
+    url: '/apply',
+    method: 'post',
+    disableValidator: true,
+    swaggerSchema: {
+      summary: 'Apply a voucher code',
+      description: 'Validate a voucher code and check if it can be applied',
+      tags: [VOUCHER_TAG],
+      body: {
+        type: 'object',
+        properties: {
+          code: { type: 'string' },
+          orderValue: { type: 'number' },
+        },
+        required: ['code', 'orderValue'],
+      },
+    },
+    preHandler: [authenticate],
+    handler: controller.applyVoucherHandler,
+  });
+
+  routeWithZod(fastify, {
     url: '/',
     method: 'post',
     disableValidator: true,

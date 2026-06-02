@@ -4,7 +4,7 @@ import {
   UpdateVoucherInput,
   GetVouchersQueryInput,
 } from './voucher.validate';
-import { ConflictError, NotFoundError } from '@/utils/errors';
+import { ConflictError, NotFoundError, BadRequestError } from '@/utils/errors';
 
 export class VoucherService {
   private repo: VoucherRepository;
@@ -91,5 +91,38 @@ export class VoucherService {
       throw new NotFoundError('Voucher not found');
     }
     return this.repo.updateVoucher(id, { isActive });
+  }
+
+  async getPublicVouchers() {
+    return this.repo.getPublicVouchers();
+  }
+
+  async applyVoucher(code: string, orderValue: number) {
+    const voucher = await this.repo.findVoucherByCode(code);
+
+    if (!voucher) {
+      throw new NotFoundError('Mã giảm giá không tồn tại');
+    }
+
+    if (!voucher.isActive) {
+      throw new BadRequestError('Mã giảm giá này hiện không khả dụng');
+    }
+
+    const now = new Date();
+    if (voucher.expirationDate && voucher.expirationDate < now) {
+      throw new BadRequestError('Mã giảm giá đã hết hạn sử dụng');
+    }
+
+    if (voucher.usageLimit !== null && voucher.usedCount >= voucher.usageLimit) {
+      throw new BadRequestError('Mã giảm giá đã hết lượt sử dụng');
+    }
+
+    if (orderValue < (voucher.minOrderValue || 0)) {
+      throw new BadRequestError(
+        `Đơn hàng chưa đạt giá trị tối thiểu ${voucher.minOrderValue?.toLocaleString('vi-VN')}đ`
+      );
+    }
+
+    return voucher;
   }
 }

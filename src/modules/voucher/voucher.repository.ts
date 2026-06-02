@@ -4,7 +4,7 @@ import {
   UpdateVoucherInput,
   GetVouchersQueryInput,
 } from './voucher.validate';
-import { eq, count, ilike, and, desc, lte, gt, or, isNull } from 'drizzle-orm';
+import { eq, count, ilike, and, desc, lte, gt, or, isNull, gte } from 'drizzle-orm';
 import { vouchers } from '@/db/schema';
 import { formatVND } from '@/utils/lib';
 
@@ -136,5 +136,26 @@ export class VoucherRepository {
 
   async deleteVoucher(id: string) {
     return this.db.delete(vouchers).where(eq(vouchers.id, id));
+  }
+
+  async toggleVoucherStatus(id: string, isActive: boolean) {
+    const [updatedVoucher] = await this.db
+      .update(vouchers)
+      .set({ isActive })
+      .where(eq(vouchers.id, id))
+      .returning();
+    return this.formatVoucher(updatedVoucher);
+  }
+
+  async getPublicVouchers() {
+    const now = new Date();
+    const activeVouchers = await this.db.query.vouchers.findMany({
+      where: and(
+        eq(vouchers.isActive, true),
+        or(isNull(vouchers.expirationDate), gte(vouchers.expirationDate, now))
+      ),
+      orderBy: [desc(vouchers.createdAt)],
+    });
+    return activeVouchers.map((v) => this.formatVoucher(v));
   }
 }

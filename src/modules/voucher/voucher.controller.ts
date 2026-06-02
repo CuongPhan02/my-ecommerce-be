@@ -99,5 +99,27 @@ export const voucherController = (fastify: FastifyInstance) => {
         result
       );
     },
+
+    getPublicVouchersHandler: async (
+      req: FastifyRequest,
+      reply: FastifyReply
+    ) => {
+      const result = await service.getPublicVouchers();
+      return sendResponseSuccess(
+        200,
+        reply,
+        'Active vouchers retrieved successfully',
+        result
+      );
+    },
+
+    applyVoucherHandler: async (
+      req: FastifyRequest<{ Body: { code: string; orderValue: number } }>,
+      reply: FastifyReply
+    ) => {
+      const { code, orderValue } = req.body;
+      const result = await service.applyVoucher(code, orderValue);
+      return sendResponseSuccess(200, reply, 'Mã giảm giá đã được áp dụng', result);
+    },
   };
 };
