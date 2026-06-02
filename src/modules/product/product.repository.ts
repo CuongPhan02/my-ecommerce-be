@@ -47,6 +47,61 @@ export class ProductRepository {
     this.db = db;
   }
 
+  private async getOrCreateAttribute(tx: any, attributeCache: Map<string, string>, name: string): Promise<string> {
+    const cachedId = attributeCache.get(name);
+    if (cachedId) return cachedId;
+
+    let attr = await tx.query.attributes.findFirst({
+      where: eq(attributes.name, name),
+    });
+
+    if (!attr) {
+      const [newAttr] = await tx
+        .insert(attributes)
+        .values({ name })
+        .returning();
+      attr = newAttr;
+    }
+
+    if (!attr) {
+      throw new Error(`Failed to create attribute: ${name}`);
+    }
+
+    attributeCache.set(name, attr.id);
+    return attr.id;
+  }
+
+  private async getOrCreateAttributeValue(tx: any, attributeValueCache: Map<string, string>, attributeId: string, value: string): Promise<string> {
+    const cacheKey = `${attributeId}:${value}`;
+    const cachedId = attributeValueCache.get(cacheKey);
+    if (cachedId) return cachedId;
+
+    let val = await tx.query.attributeValues.findFirst({
+      where: and(
+        eq(attributeValues.attributeId, attributeId),
+        eq(attributeValues.value, value)
+      ),
+    });
+
+    if (!val) {
+      const [newVal] = await tx
+        .insert(attributeValues)
+        .values({
+          attributeId,
+          value,
+        })
+        .returning();
+      val = newVal;
+    }
+
+    if (!val) {
+      throw new Error(`Failed to create attribute value: ${value}`);
+    }
+
+    attributeValueCache.set(cacheKey, val.id);
+    return val.id;
+  }
+
   async findCategoryById(id: string) {
     return this.db.query.categories.findFirst({
       where: eq(categories.id, id),
@@ -163,65 +218,10 @@ export class ProductRepository {
       const attributeCache = new Map<string, string>(); // name -> id
       const attributeValueCache = new Map<string, string>(); // `${attributeId}:${value}` -> id
 
-      const getOrCreateAttribute = async (name: string): Promise<string> => {
-        const cachedId = attributeCache.get(name);
-        if (cachedId) return cachedId;
-
-        let attr = await tx.query.attributes.findFirst({
-          where: eq(attributes.name, name),
-        });
-
-        if (!attr) {
-          const [newAttr] = await tx
-            .insert(attributes)
-            .values({ name })
-            .returning();
-          attr = newAttr;
-        }
-
-        if (!attr) {
-          throw new Error(`Failed to create attribute: ${name}`);
-        }
-
-        attributeCache.set(name, attr.id);
-        return attr.id;
-      };
-
-      const getOrCreateAttributeValue = async (attributeId: string, value: string): Promise<string> => {
-        const cacheKey = `${attributeId}:${value}`;
-        const cachedId = attributeValueCache.get(cacheKey);
-        if (cachedId) return cachedId;
-
-        let val = await tx.query.attributeValues.findFirst({
-          where: and(
-            eq(attributeValues.attributeId, attributeId),
-            eq(attributeValues.value, value)
-          ),
-        });
-
-        if (!val) {
-          const [newVal] = await tx
-            .insert(attributeValues)
-            .values({
-              attributeId,
-              value,
-            })
-            .returning();
-          val = newVal;
-        }
-
-        if (!val) {
-          throw new Error(`Failed to create attribute value: ${value}`);
-        }
-
-        attributeValueCache.set(cacheKey, val.id);
-        return val.id;
-      };
-
       // 1.5. Create Product Options (If any)
       if (options && options.length > 0) {
         for (const option of options) {
-          const attrId = await getOrCreateAttribute(option.name);
+          const attrId = await this.getOrCreateAttribute(tx, attributeCache, option.name);
 
           // Deduplicate option values case-insensitively while preserving original casing
           const uniqueValues: string[] = [];
@@ -237,7 +237,7 @@ export class ProductRepository {
 
           // Handle values
           for (const valName of uniqueValues) {
-            const valId = await getOrCreateAttributeValue(attrId, valName);
+            const valId = await this.getOrCreateAttributeValue(tx, attributeValueCache, attrId, valName);
 
             // Link to Product
             await tx
@@ -319,8 +319,8 @@ export class ProductRepository {
           // 3.2 Handle Attributes
           if (variant.attributes && variant.attributes.length > 0) {
             for (const attr of variant.attributes) {
-              const attributeId = await getOrCreateAttribute(attr.name);
-              const valueId = await getOrCreateAttributeValue(attributeId, attr.value);
+              const attributeId = await this.getOrCreateAttribute(tx, attributeCache, attr.name);
+              const valueId = await this.getOrCreateAttributeValue(tx, attributeValueCache, attributeId, attr.value);
 
               if (valueId && newVariant) {
                 // 3.3 Link Attribute Value to Variant
@@ -625,6 +625,10 @@ export class ProductRepository {
     } = data;
 
     return await this.db.transaction(async (tx) => {
+      // 0. Cache for attributes
+      const attributeCache = new Map<string, string>();
+      const attributeValueCache = new Map<string, string>();
+
       // 1. Prepare and Update basic product info
       const updatePayload: Record<string, any> = { ...productData };
       if (discountStartDate !== undefined) {
@@ -652,45 +656,18 @@ export class ProductRepository {
         // Insert new options
         if (options && options.length > 0) {
           for (const option of options) {
-            // Find or create attribute
-            let attr = await tx.query.attributes.findFirst({
-              where: eq(attributes.name, option.name),
-            });
-
-            if (!attr) {
-              const [newAttr] = await tx
-                .insert(attributes)
-                .values({ name: option.name })
-                .returning();
-              attr = newAttr;
-            }
+            const attrId = await this.getOrCreateAttribute(tx, attributeCache, option.name);
 
             // Handle values
             for (const valName of option.values) {
-              let val = await tx.query.attributeValues.findFirst({
-                where: and(
-                  eq(attributeValues.attributeId, attr!.id),
-                  eq(attributeValues.value, valName)
-                ),
-              });
-
-              if (!val) {
-                const [newVal] = await tx
-                  .insert(attributeValues)
-                  .values({
-                    attributeId: attr!.id,
-                    value: valName,
-                  })
-                  .returning();
-                val = newVal;
-              }
+              const valId = await this.getOrCreateAttributeValue(tx, attributeValueCache, attrId, valName);
 
               // Link to Product
               await tx
                 .insert(productAttributeOptions)
                 .values({
                   productId: id,
-                  attributeValueId: val!.id,
+                  attributeValueId: valId,
                 })
                 .onConflictDoNothing();
             }
@@ -716,7 +693,108 @@ export class ProductRepository {
         }
       }
 
-      // 4. Variant/Media Sync can be added here if needed in the future
+      // 4. Update Images (Sync)
+      if (mediaIds !== undefined) {
+        // Delete existing images
+        await tx
+          .delete(productImages)
+          .where(eq(productImages.productId, id));
+
+        // Insert new images
+        if (mediaIds && mediaIds.length > 0) {
+          await tx.insert(productImages).values(
+            mediaIds.map((mediaId, index) => ({
+              productId: id,
+              mediaId,
+              displayOrder: index,
+            }))
+          );
+        }
+      }
+
+      // 5. Update Variants (Sync)
+      if (variants !== undefined) {
+        const existingVariants = await tx.query.productVariants.findMany({
+          where: eq(productVariants.productId, id),
+        });
+
+        // 5.1 Deduplicate incoming variants
+        const incomingVariants = variants || [];
+        const uniqueIncoming: typeof incomingVariants = [];
+        const seenSkus = new Set<string>();
+        for (const v of incomingVariants) {
+          const lowerSku = v.sku.trim().toLowerCase();
+          if (!seenSkus.has(lowerSku)) {
+            seenSkus.add(lowerSku);
+            uniqueIncoming.push(v);
+          }
+        }
+
+        const incomingSkus = uniqueIncoming.map(v => v.sku.trim());
+
+        // 5.2 Delete variants not in incoming list
+        const variantsToDelete = existingVariants.filter(v => !incomingSkus.includes(v.sku));
+        if (variantsToDelete.length > 0) {
+          await tx.delete(productVariants).where(
+            inArray(productVariants.id, variantsToDelete.map(v => v.id))
+          );
+        }
+
+        // 5.3 Update or Create
+        for (const v of uniqueIncoming) {
+          const existing = existingVariants.find(ev => ev.sku === v.sku);
+          
+          if (existing) {
+            // Update existing variant
+            await tx
+              .update(productVariants)
+              .set({
+                price: v.price,
+                stockQuantity: v.stock,
+                purchasePrice: v.purchasePrice ?? 0,
+                lowStockQuantity: v.lowStockQuantity ?? 0,
+              })
+              .where(eq(productVariants.id, existing.id));
+
+            // Sync attributes for existing variant
+            if (v.attributes) {
+              await tx.delete(attributeValuesToVariants).where(eq(attributeValuesToVariants.productVariantId, existing.id));
+              for (const attr of v.attributes) {
+                const attributeId = await this.getOrCreateAttribute(tx, attributeCache, attr.name);
+                const valueId = await this.getOrCreateAttributeValue(tx, attributeValueCache, attributeId, attr.value);
+                await tx.insert(attributeValuesToVariants).values({
+                  productVariantId: existing.id,
+                  attributeValueId: valueId,
+                });
+              }
+            }
+          } else {
+            // Create new variant
+            const [newV] = await tx
+              .insert(productVariants)
+              .values({
+                productId: id,
+                sku: v.sku.trim(),
+                price: v.price,
+                stockQuantity: v.stock,
+                purchasePrice: v.purchasePrice ?? 0,
+                lowStockQuantity: v.lowStockQuantity ?? 0,
+              })
+              .returning();
+
+            if (v.attributes && newV) {
+              for (const attr of v.attributes) {
+                const attributeId = await this.getOrCreateAttribute(tx, attributeCache, attr.name);
+                const valueId = await this.getOrCreateAttributeValue(tx, attributeValueCache, attributeId, attr.value);
+                await tx.insert(attributeValuesToVariants).values({
+                  productVariantId: newV.id,
+                  attributeValueId: valueId,
+                });
+              }
+            }
+          }
+        }
+      }
 
       return this.getProductById(id);
     });
