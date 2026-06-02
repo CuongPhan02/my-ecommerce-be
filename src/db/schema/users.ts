@@ -63,6 +63,8 @@ export const addresses = pgTable('address', {
   id: text('id')
     .$defaultFn(() => cuid())
     .primaryKey(),
+  receiverName: text('receiver_name').notNull().default(''),
+  phone: text('phone').notNull().default(''),
   street: text('street').notNull(),
   city: text('city').notNull(),
   province: text('province').notNull(),
