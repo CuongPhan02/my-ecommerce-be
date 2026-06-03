@@ -16,11 +16,11 @@ export class CollectionService {
   async createCollection(data: CreateCollectionInput) {
     const existSlug = await this.repo.findBySlug(data.slug);
     if (existSlug) {
-      throw new ConflictError('Collection slug already exists');
+      throw new ConflictError('Đường dẫn bộ sưu tập đã tồn tại');
     }
     const existName = await this.repo.findByName(data.name);
     if (existName) {
-      throw new ConflictError('Collection name already exists');
+      throw new ConflictError('Tên bộ sưu tập đã tồn tại');
     }
     return this.repo.createCollection(data);
   }
@@ -43,7 +43,7 @@ export class CollectionService {
 
   async getCollectionById(id: string) {
     const collection = await this.repo.getCollectionById(id);
-    if (!collection) throw new NotFoundError('Collection not found');
+    if (!collection) throw new NotFoundError('Không tìm thấy bộ sưu tập');
     return collection;
   }
 
@@ -64,7 +64,7 @@ export class CollectionService {
    */
   async toggleHomeActive(id: string, data: ToggleHomeActiveInput) {
     const collection = await this.repo.getCollectionById(id);
-    if (!collection) throw new NotFoundError('Collection not found');
+    if (!collection) throw new NotFoundError('Không tìm thấy bộ sưu tập');
     return this.repo.toggleHomeActive(id, data.isHomeActive);
   }
 

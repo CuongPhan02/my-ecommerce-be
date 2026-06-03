@@ -16,7 +16,7 @@ export class VoucherService {
   async createVoucher(data: CreateVoucherInput) {
     const existing = await this.repo.findVoucherByCode(data.code);
     if (existing) {
-      throw new ConflictError('Voucher code already exists');
+      throw new ConflictError('Mã giảm giá đã tồn tại');
     }
     return this.repo.createVoucher(data);
   }
@@ -47,7 +47,7 @@ export class VoucherService {
   async getVoucherById(id: string) {
     const voucher = await this.repo.getVoucherById(id);
     if (!voucher) {
-      throw new NotFoundError('Voucher not found');
+      throw new NotFoundError('Không tìm thấy mã giảm giá');
     }
 
     let status: 'ACTIVE' | 'PAUSED' | 'EXPIRED' = 'ACTIVE';
@@ -64,13 +64,13 @@ export class VoucherService {
   async updateVoucher(id: string, data: UpdateVoucherInput) {
     const voucher = await this.repo.getVoucherById(id);
     if (!voucher) {
-      throw new NotFoundError('Voucher not found');
+      throw new NotFoundError('Không tìm thấy mã giảm giá');
     }
 
     if (data.code && data.code !== voucher.code) {
       const existing = await this.repo.findVoucherByCode(data.code);
       if (existing) {
-        throw new ConflictError('Voucher code already exists');
+        throw new ConflictError('Mã giảm giá đã tồn tại');
       }
     }
 
@@ -80,7 +80,7 @@ export class VoucherService {
   async deleteVoucher(id: string) {
     const voucher = await this.repo.getVoucherById(id);
     if (!voucher) {
-      throw new NotFoundError('Voucher not found');
+      throw new NotFoundError('Không tìm thấy mã giảm giá');
     }
     return this.repo.deleteVoucher(id);
   }
@@ -88,7 +88,7 @@ export class VoucherService {
   async toggleVoucherStatus(id: string, isActive: boolean) {
     const voucher = await this.repo.getVoucherById(id);
     if (!voucher) {
-      throw new NotFoundError('Voucher not found');
+      throw new NotFoundError('Không tìm thấy mã giảm giá');
     }
     return this.repo.updateVoucher(id, { isActive });
   }

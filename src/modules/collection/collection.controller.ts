@@ -22,7 +22,7 @@ export const collectionController = (fastify: FastifyInstance) => {
       return sendResponseSuccess(
         200,
         reply,
-        'Create collection success',
+        'Tạo bộ sưu tập thành công',
         result
       );
     },
@@ -38,7 +38,7 @@ export const collectionController = (fastify: FastifyInstance) => {
       return sendResponseSuccess(
         200,
         reply,
-        'Get all collections success',
+        'Lấy danh sách bộ sưu tập thành công',
         result
       );
     },
@@ -54,7 +54,7 @@ export const collectionController = (fastify: FastifyInstance) => {
       return sendResponseSuccess(
         200,
         reply,
-        'Get home collections success',
+        'Lấy danh sách bộ sưu tập trang chủ thành công',
         result
       );
     },
@@ -64,7 +64,7 @@ export const collectionController = (fastify: FastifyInstance) => {
       reply: FastifyReply
     ) => {
       const result = await service.getCollectionById(req.params.id);
-      return sendResponseSuccess(200, reply, 'Get collection success', result);
+      return sendResponseSuccess(200, reply, 'Lấy thông tin bộ sưu tập thành công', result);
     },
 
     updateCollectionHandler: async (
@@ -78,7 +78,7 @@ export const collectionController = (fastify: FastifyInstance) => {
       return sendResponseSuccess(
         200,
         reply,
-        'Update collection success',
+        'Cập nhật bộ sưu tập thành công',
         result
       );
     },
@@ -107,7 +107,7 @@ export const collectionController = (fastify: FastifyInstance) => {
       reply: FastifyReply
     ) => {
       await service.deleteCollection(req.params.id);
-      return sendResponseSuccess(200, reply, 'Delete collection success', null);
+      return sendResponseSuccess(200, reply, 'Xóa bộ sưu tập thành công', null);
     },
 
     addProductsHandler: async (
@@ -121,7 +121,7 @@ export const collectionController = (fastify: FastifyInstance) => {
       return sendResponseSuccess(
         200,
         reply,
-        'Add products to collection success',
+        'Thêm sản phẩm vào bộ sưu tập thành công',
         result
       );
     },

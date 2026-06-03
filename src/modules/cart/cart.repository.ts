@@ -22,7 +22,7 @@ export class CartRepository {
         .values({ userId })
         .returning();
       if (!newCart) {
-        throw new Error('Failed to create cart');
+        throw new Error('Không thể tạo giỏ hàng');
       }
       cart = newCart;
     }

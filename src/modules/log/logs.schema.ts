@@ -1,13 +1,13 @@
 import { z } from 'zod';
 
-export const getLogFileSchema = z.object({
-  filename: z.string().min(1, { message: 'Filename is required' }),
+export const viewLogSchema = z.object({
+  filename: z.string().min(1, { message: 'Tên file là bắt buộc' }),
 });
 
-export const searchLogFileSchema = z.object({
-  filename: z.string().min(1, { message: 'Filename is required' }),
-  keyword: z.string().min(1, { message: 'Keyword is required' }),
+export const searchLogSchema = z.object({
+  filename: z.string().min(1, { message: 'Tên file là bắt buộc' }),
+  keyword: z.string().min(1, { message: 'Từ khóa là bắt buộc' }),
 });
 
-export type GetLogFileParams = z.infer<typeof getLogFileSchema>;
-export type SearchLogFileParams = z.infer<typeof searchLogFileSchema>;
+export type GetLogFileParams = z.infer<typeof viewLogSchema>;
+export type SearchLogFileParams = z.infer<typeof searchLogSchema>;

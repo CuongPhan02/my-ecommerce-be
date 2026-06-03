@@ -1,12 +1,12 @@
 import { z } from 'zod';
 
 export const addToCartSchema = z.object({
-  productVariantId: z.string().min(1, 'Product variant ID is required'),
-  quantity: z.number().int().min(1, 'Quantity must be at least 1'),
+  productVariantId: z.string().min(1, 'ID biến thể sản phẩm là bắt buộc'),
+  quantity: z.number().int().min(1, 'Số lượng phải ít nhất là 1'),
 });
 
 export const updateCartItemSchema = z.object({
-  quantity: z.number().int().min(1, 'Quantity must be at least 1'),
+  quantity: z.number().int().min(1, 'Số lượng phải ít nhất là 1'),
 });
 
 export type AddToCartInput = z.infer<typeof addToCartSchema>;

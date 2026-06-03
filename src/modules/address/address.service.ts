@@ -20,7 +20,7 @@ export class AddressService {
   async updateAddress(id: string, userId: string, data: UpdateAddressType) {
     const address = await this.repo.getAddressById(id, userId);
     if (!address) {
-      throw new NotFoundError('Address not found');
+      throw new NotFoundError('Không tìm thấy địa chỉ');
     }
     return this.repo.updateAddress(id, userId, data);
   }
@@ -28,7 +28,7 @@ export class AddressService {
   async deleteAddress(id: string, userId: string) {
     const address = await this.repo.getAddressById(id, userId);
     if (!address) {
-      throw new NotFoundError('Address not found');
+      throw new NotFoundError('Không tìm thấy địa chỉ');
     }
     return this.repo.deleteAddress(id, userId);
   }
@@ -36,7 +36,7 @@ export class AddressService {
   async setDefaultAddress(id: string, userId: string) {
     const address = await this.repo.getAddressById(id, userId);
     if (!address) {
-      throw new NotFoundError('Address not found');
+      throw new NotFoundError('Không tìm thấy địa chỉ');
     }
     return this.repo.setDefaultAddress(id, userId);
   }

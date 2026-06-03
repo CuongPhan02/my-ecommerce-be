@@ -97,7 +97,7 @@ export const zodErrorHandlerPlugin = fp(async (fastify: FastifyInstance) => {
 
         return reply.status(400).send({
           success: false,
-          message: 'Validation failed',
+          message: 'Dữ liệu không hợp lệ',
           errors: Object.fromEntries(
             error.issues.map((issue) => [issue.path.join('.'), issue.message])
           ),
@@ -139,7 +139,7 @@ export const zodErrorHandlerPlugin = fp(async (fastify: FastifyInstance) => {
 
         return reply.status(400).send({
           success: false,
-          message: 'Validation failed',
+          message: 'Dữ liệu không hợp lệ',
           errors: formattedErrors,
         });
       }
@@ -235,7 +235,7 @@ export const zodErrorHandlerPlugin = fp(async (fastify: FastifyInstance) => {
 
       return reply.status(500).send({
         success: false,
-        message: 'Internal Server Error',
+        message: 'Lỗi hệ thống, vui lòng thử lại sau',
       });
     }
   );

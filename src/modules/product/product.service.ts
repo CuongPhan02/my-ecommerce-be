@@ -26,12 +26,12 @@ export class ProductService {
   async createProduct(data: CreateProductInput) {
     const existCategory = await this.repo.findCategoryById(data.categoryId);
     if (!existCategory) {
-      throw new NotFoundError('Category not found');
+      throw new NotFoundError('Không tìm thấy danh mục');
     }
 
     const existSlug = await this.repo.findProductBySlug(data.slug);
     if (existSlug) {
-      throw new ConflictError('Product slug already exists');
+      throw new ConflictError('Đường dẫn sản phẩm đã tồn tại');
     }
 
     return this.repo.createProduct(data);
@@ -52,7 +52,7 @@ export class ProductService {
 
   async getProductById(id: string) {
     const product = await this.repo.getProductById(id);
-    if (!product) throw new Error('Product not found');
+    if (!product) throw new Error('Không tìm thấy sản phẩm');
     return product;
   }
 
@@ -63,7 +63,7 @@ export class ProductService {
     if (data.slug && data.slug !== existing.slug) {
       const existSlug = await this.repo.findProductBySlug(data.slug);
       if (existSlug && existSlug.id !== id) {
-        throw new ConflictError('Product slug already exists');
+        throw new ConflictError('Đường dẫn sản phẩm đã tồn tại');
       }
     }
 
@@ -86,7 +86,7 @@ export class ProductService {
    */
   async setSaleTimer(id: string, data: SaleTimerInput) {
     const product = await this.repo.getProductById(id);
-    if (!product) throw new NotFoundError('Product not found');
+    if (!product) throw new NotFoundError('Không tìm thấy sản phẩm');
     return this.repo.updateSaleTimer(id, data);
   }
 
@@ -96,10 +96,10 @@ export class ProductService {
     const existSlug = await this.repo.findCategoryBySlug(data.slug);
     const existName = await this.repo.findCategoryByName(data.name);
     if (existSlug) {
-      throw new ConflictError('Category slug already exists');
+      throw new ConflictError('Đường dẫn danh mục đã tồn tại');
     }
     if (existName) {
-      throw new ConflictError('Category name already exists');
+      throw new ConflictError('Tên danh mục đã tồn tại');
     }
     const createCategory = await this.repo.createCategory(data);
     return createCategory;
@@ -119,7 +119,7 @@ export class ProductService {
 
   async getCategoryById(id: string) {
     const category = await this.repo.getCategoryById(id);
-    if (!category) throw new Error('Category not found');
+    if (!category) throw new Error('Không tìm thấy danh mục');
     return category;
   }
 
@@ -158,7 +158,7 @@ export class ProductService {
 
   async getAttributeById(id: string) {
     const attribute = await this.repo.getAttributeById(id);
-    if (!attribute) throw new Error('Attribute not found');
+    if (!attribute) throw new Error('Không tìm thấy thuộc tính');
     return attribute;
   }
 
@@ -185,7 +185,7 @@ export class ProductService {
   async createBrand(data: CreateBrandInput) {
     const existSlug = await this.repo.getBrandBySlug(data.slug);
     if (existSlug) {
-      throw new ConflictError('Brand slug already exists');
+      throw new ConflictError('Đường dẫn thương hiệu đã tồn tại');
     }
     return this.repo.createBrand(data);
   }
@@ -205,7 +205,7 @@ export class ProductService {
 
   async getBrandById(id: string) {
     const brand = await this.repo.getBrandById(id);
-    if (!brand) throw new Error('Brand not found');
+    if (!brand) throw new Error('Không tìm thấy thương hiệu');
     return brand;
   }
 

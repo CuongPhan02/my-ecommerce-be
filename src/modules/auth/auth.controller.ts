@@ -29,7 +29,7 @@ export const authController = (fastify: FastifyInstance) => {
       reply: FastifyReply
     ) => {
       const result = await service.register(req.body!);
-      return sendResponseSuccess(200, reply, 'Register success', result);
+      return sendResponseSuccess(200, reply, 'Đăng ký tài khoản thành công', result);
     },
 
     loginHandler: async (
@@ -56,10 +56,10 @@ export const authController = (fastify: FastifyInstance) => {
       // Remove refreshToken from body response if not mobile
       // if (!req.body?.isMobile) {
       //   const { refreshToken, ...response } = result;
-      //   return sendResponseSuccess(200, reply, 'Login success', response);
+      //   return sendResponseSuccess(200, reply, 'Đăng nhập thành công', response);
       // }
 
-      return sendResponseSuccess(200, reply, 'Login success', result);
+      return sendResponseSuccess(200, reply, 'Đăng nhập thành công', result);
     },
 
     googleLoginHandler: async (
@@ -93,12 +93,12 @@ export const authController = (fastify: FastifyInstance) => {
         return sendResponseSuccess(
           200,
           reply,
-          'Google login success',
+          'Đăng nhập Google thành công',
           response
         );
       }
 
-      return sendResponseSuccess(200, reply, 'Google login success', result);
+      return sendResponseSuccess(200, reply, 'Đăng nhập Google thành công', result);
     },
 
     logOutHandler: async (
@@ -111,12 +111,12 @@ export const authController = (fastify: FastifyInstance) => {
         req.body?.refreshToken || (req.cookies[COOKIE_NAME] as string);
 
       if (!refreshToken) {
-        throw new BadRequestError('Missing refresh token');
+        throw new BadRequestError('Thiếu refresh token');
       }
 
       const result = await service.logout(refreshToken);
       reply.clearCookie(COOKIE_NAME, { path: '/' });
-      return sendResponseSuccess(200, reply, 'Logout success', result);
+      return sendResponseSuccess(200, reply, 'Đăng xuất thành công', result);
     },
 
     refreshTokenHandler: async (
@@ -132,7 +132,7 @@ export const authController = (fastify: FastifyInstance) => {
         req.body?.refreshToken || (req.cookies[COOKIE_NAME] as string);
 
       if (!refreshToken) {
-        throw new BadRequestError('Missing refresh token');
+        throw new BadRequestError('Thiếu refresh token');
       }
 
       const result = await service.refresh(
@@ -152,7 +152,7 @@ export const authController = (fastify: FastifyInstance) => {
         maxAge: maxAge / 1000,
       });
 
-      return sendResponseSuccess(200, reply, 'Refresh token success', {
+      return sendResponseSuccess(200, reply, 'Làm mới token thành công', {
         accessToken: result.accessToken,
         refreshToken: result.refreshToken,
       });
@@ -161,17 +161,17 @@ export const authController = (fastify: FastifyInstance) => {
     getMeHandler: async (req: FastifyRequest, reply: FastifyReply) => {
       const user = req.user as { id: string };
       const result = await service.getProfile(user.id);
-      return sendResponseSuccess(200, reply, 'Get me success', result);
+      return sendResponseSuccess(200, reply, 'Lấy thông tin cá nhân thành công', result);
     },
     verifyEmailHandler: async (
       req: FastifyRequest<{ Body?: VerifyEmailInput }>,
       reply: FastifyReply
     ) => {
       if (!req.body?.email || !req.body?.token) {
-        throw new BadRequestError('Missing email or token');
+        throw new BadRequestError('Thiếu email hoặc token');
       }
       const result = await service.verifyEmail(req.body.email, req.body.token);
-      return sendResponseSuccess(200, reply, 'Verify `email success', result);
+      return sendResponseSuccess(200, reply, 'Xác thực email thành công', result);
     },
 
     resendVerifyEmailHandler: async (
@@ -185,7 +185,7 @@ export const authController = (fastify: FastifyInstance) => {
       return sendResponseSuccess(
         200,
         reply,
-        'Resend verification email success',
+        'Gửi lại email xác thực thành công',
         result
       );
     },
@@ -197,7 +197,7 @@ export const authController = (fastify: FastifyInstance) => {
         req.body!.email,
         req.body!.urlRedirect
       );
-      return sendResponseSuccess(200, reply, 'Forgot password success', result);
+      return sendResponseSuccess(200, reply, 'Yêu cầu đặt lại mật khẩu đã được gửi', result);
     },
     resetPasswordHandler: async (
       req: FastifyRequest<{ Body?: ResetPasswordInput }>,
@@ -208,7 +208,7 @@ export const authController = (fastify: FastifyInstance) => {
         req.body!.token,
         req.body!.password
       );
-      return sendResponseSuccess(200, reply, 'Reset password success', result);
+      return sendResponseSuccess(200, reply, 'Đặt lại mật khẩu thành công', result);
     },
 
     updateProfileHandler: async (
@@ -217,7 +217,7 @@ export const authController = (fastify: FastifyInstance) => {
     ) => {
       const user = req.user as { id: string };
       const result = await service.updateProfile(user.id, req.body!);
-      return sendResponseSuccess(200, reply, 'Update profile success', result);
+      return sendResponseSuccess(200, reply, 'Cập nhật thông tin thành công', result);
     },
 
     changePasswordHandler: async (
@@ -226,7 +226,7 @@ export const authController = (fastify: FastifyInstance) => {
     ) => {
       const user = req.user as { id: string };
       const result = await service.changePassword(user.id, req.body!);
-      return sendResponseSuccess(200, reply, 'Change password success', result);
+      return sendResponseSuccess(200, reply, 'Đổi mật khẩu thành công', result);
     },
   };
 };

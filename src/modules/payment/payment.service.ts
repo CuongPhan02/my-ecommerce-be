@@ -17,7 +17,7 @@ export class PaymentService {
   async createPaymentUrl(data: CreatePaymentUrlInput, ipAddress: string): Promise<string> {
     const order = await this.repo.findOrderById(data.orderId);
     if (!order) {
-      throw new NotFoundError('Order not found');
+      throw new NotFoundError('Không tìm thấy đơn hàng');
     }
 
     // Đảm bảo có bản ghi thanh toán tương ứng
@@ -97,7 +97,7 @@ export class PaymentService {
   async handleReturn(query: Record<string, any>) {
     const secureHash = query.vnp_SecureHash;
     if (!secureHash) {
-      throw new BadRequestError('Invalid secure hash from VNPAY');
+      throw new BadRequestError('Mã băm bảo mật không hợp lệ từ VNPAY');
     }
 
     const vnpParams = { ...query };
@@ -122,7 +122,7 @@ export class PaymentService {
     const calculatedHash = hmac.update(Buffer.from(signData, 'utf-8')).digest('hex');
 
     if (calculatedHash !== secureHash) {
-      throw new BadRequestError('Invalid signature verification');
+      throw new BadRequestError('Xác thực chữ ký không hợp lệ');
     }
 
     const orderId = query.vnp_TxnRef;
@@ -159,7 +159,7 @@ export class PaymentService {
   async handleIpn(query: Record<string, any>) {
     const secureHash = query.vnp_SecureHash;
     if (!secureHash) {
-      return { RspCode: '97', Message: 'Invalid signature' };
+      return { RspCode: '97', Message: 'Chữ ký không hợp lệ' };
     }
 
     const vnpParams = { ...query };
@@ -184,25 +184,25 @@ export class PaymentService {
     const calculatedHash = hmac.update(Buffer.from(signData, 'utf-8')).digest('hex');
 
     if (calculatedHash !== secureHash) {
-      return { RspCode: '97', Message: 'Invalid signature' };
+      return { RspCode: '97', Message: 'Chữ ký không hợp lệ' };
     }
 
     const orderId = query.vnp_TxnRef;
     const order = await this.repo.findOrderById(orderId);
     if (!order) {
-      return { RspCode: '01', Message: 'Order not found' };
+      return { RspCode: '01', Message: 'Không tìm thấy đơn hàng' };
     }
 
     // Kiểm tra số tiền giao dịch hợp lệ
     const vnpAmount = Number(query.vnp_Amount) / 100;
     if (vnpAmount !== order.totalAmount) {
-      return { RspCode: '04', Message: 'Invalid amount' };
+      return { RspCode: '04', Message: 'Số tiền không hợp lệ' };
     }
 
     // Kiểm tra trạng thái đơn hàng đã xác nhận chưa
     const payment = order.payment;
     if (payment && payment.status !== 'PENDING') {
-      return { RspCode: '02', Message: 'Order already confirmed' };
+      return { RspCode: '02', Message: 'Đơn hàng đã được xác nhận trước đó' };
     }
 
     const responseCode = query.vnp_ResponseCode;
@@ -217,6 +217,6 @@ export class PaymentService {
       await this.repo.updateOrderStatus(orderId, 'CANCELLED');
     }
 
-    return { RspCode: '00', Message: 'Confirm success' };
+    return { RspCode: '00', Message: 'Xác nhận thành công' };
   }
 }

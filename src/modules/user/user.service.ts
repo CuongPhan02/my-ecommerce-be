@@ -30,7 +30,7 @@ export class UserService {
   async getUserById(id: string) {
     const user = await this.repo.getUserById(id);
     if (!user) {
-      throw new NotFoundError('User not found');
+      throw new NotFoundError('Không tìm thấy người dùng');
     }
     return user;
   }
@@ -39,14 +39,14 @@ export class UserService {
     // Check if email already exists
     const existingEmail = await this.repo.findUserByEmail(data.email);
     if (existingEmail) {
-      throw new BadRequestError('Email is already in use');
+      throw new BadRequestError('Email đã được sử dụng');
     }
 
     // Check if phone already exists
     if (data.phone) {
       const existingPhone = await this.repo.findUserByPhone(data.phone);
       if (existingPhone) {
-        throw new BadRequestError('Phone number is already in use');
+        throw new BadRequestError('Số điện thoại đã được sử dụng');
       }
     }
 
@@ -64,14 +64,14 @@ export class UserService {
     // Check if user exists
     const user = await this.repo.getUserById(id);
     if (!user) {
-      throw new NotFoundError('User not found');
+      throw new NotFoundError('Không tìm thấy người dùng');
     }
 
     // Check email uniqueness if email is changed
     if (data.email && data.email !== user.email) {
       const existingEmail = await this.repo.findUserByEmail(data.email);
       if (existingEmail) {
-        throw new BadRequestError('Email is already in use');
+        throw new BadRequestError('Email đã được sử dụng');
       }
     }
 
@@ -79,7 +79,7 @@ export class UserService {
     if (data.phone && data.phone !== user.phone) {
       const existingPhone = await this.repo.findUserByPhone(data.phone);
       if (existingPhone) {
-        throw new BadRequestError('Phone number is already in use');
+        throw new BadRequestError('Số điện thoại đã được sử dụng');
       }
     }
 
@@ -89,14 +89,14 @@ export class UserService {
   async deleteUser(id: string) {
     const user = await this.repo.getUserById(id);
     if (!user) {
-      throw new NotFoundError('User not found');
+      throw new NotFoundError('Không tìm thấy người dùng');
     }
     return this.repo.deleteUser(id);
   }
 
   async bulkDeleteUsers(ids: string[]) {
     if (!ids || ids.length === 0) {
-      throw new BadRequestError('User IDs list cannot be empty');
+      throw new BadRequestError('Danh sách ID người dùng không được để trống');
     }
     return this.repo.bulkDeleteUsers(ids);
   }

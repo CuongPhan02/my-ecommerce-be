@@ -22,7 +22,7 @@ export const mediaController = (fastify: FastifyInstance) => {
     createMediaSingle: async (req: FastifyRequest, reply: FastifyReply) => {
       const file = (req as any).savedFile;
 
-      if (!file) return sendResponseError(400, reply, 'No file uploaded', null);
+      if (!file) return sendResponseError(400, reply, 'Không có tệp tin nào được tải lên', null);
 
       try {
         const folderId = ((req.query as any)?.folderId as string) || '';
@@ -35,13 +35,13 @@ export const mediaController = (fastify: FastifyInstance) => {
           folderId: folderId,
         });
 
-        return sendResponseSuccess(201, reply, 'Create media success', media);
+        return sendResponseSuccess(201, reply, 'Tải tệp tin lên thành công', media);
       } catch (error: any) {
         console.error('Error during multiple file upload:', error);
         return sendResponseError(
           500,
           reply,
-          error?.message || 'An error occurred during file processing',
+          error?.message || 'Có lỗi xảy ra trong quá trình xử lý tệp tin',
           null
         );
       }
@@ -59,13 +59,13 @@ export const mediaController = (fastify: FastifyInstance) => {
 
         const medias = await service.createMediaMultiple(parts, folderId);
 
-        return sendResponseSuccess(200, reply, 'Create media success', medias);
+        return sendResponseSuccess(200, reply, 'Tải các tệp tin lên thành công', medias);
       } catch (error) {
         console.error('Error during multiple file upload:', error);
         return sendResponseError(
           500,
           reply,
-          'An error occurred during file processing',
+          'Có lỗi xảy ra trong quá trình xử lý tệp tin',
           null
         );
       }
@@ -87,7 +87,7 @@ export const mediaController = (fastify: FastifyInstance) => {
         Number(limit)
       );
 
-      return sendResponseSuccess(201, reply, 'Get List media success', data);
+      return sendResponseSuccess(201, reply, 'Lấy danh sách tệp tin thành công', data);
     },
     deleteMediaSingle: async (
       req: FastifyRequest<{ Body?: DeleteMediaSingleInput }>,
@@ -95,13 +95,13 @@ export const mediaController = (fastify: FastifyInstance) => {
     ) => {
       const id = req.body?.id;
       if (!id) {
-        return sendResponseError(400, reply, 'No id provided', null);
+        return sendResponseError(400, reply, 'Thiếu ID tệp tin', null);
       }
       const result = await service.deleteMediaSingle({ id });
       return sendResponseSuccess(
         200,
         reply,
-        'Media deleted successfully',
+        'Xóa tệp tin thành công',
         result
       );
     },
@@ -111,11 +111,11 @@ export const mediaController = (fastify: FastifyInstance) => {
     ) => {
       const ids = req.body?.ids;
       if (!ids || !Array.isArray(ids) || ids.length === 0) {
-        return sendResponseError(400, reply, 'No ids provided', null);
+        return sendResponseError(400, reply, 'Thiếu danh sách ID tệp tin', null);
       }
       const result = await service.deleteMediaMultiple({ ids });
 
-      return sendResponseSuccess(200, reply, 'Media deleted', result);
+      return sendResponseSuccess(200, reply, 'Đã xóa tệp tin', result);
     },
     // ============================================================================
     // MEDIA FOLDER CONTROLLER
@@ -125,15 +125,15 @@ export const mediaController = (fastify: FastifyInstance) => {
       reply: FastifyReply
     ) => {
       if (!req.body) {
-        return sendResponseError(400, reply, 'Missing body', null);
+        return sendResponseError(400, reply, 'Thiếu dữ liệu yêu cầu', null);
       }
       const newFolder = await service.createFolder(req.body!);
-      return sendResponseSuccess(200, reply, 'Success', newFolder);
+      return sendResponseSuccess(200, reply, 'Thành công', newFolder);
     },
 
     getAllFoldersHandler: async (req: FastifyRequest, reply: FastifyReply) => {
       const result = await service.getAllFoldersAsTree();
-      return sendResponseSuccess(200, reply, 'Success', result);
+      return sendResponseSuccess(200, reply, 'Thành công', result);
     },
 
     updateFolderHandler: async (
@@ -141,10 +141,10 @@ export const mediaController = (fastify: FastifyInstance) => {
       reply: FastifyReply
     ) => {
       if (!req.body) {
-        return sendResponseError(400, reply, 'Missing body', null);
+        return sendResponseError(400, reply, 'Thiếu dữ liệu yêu cầu', null);
       }
       const updatedFolder = await service.updateFolder(req.body!);
-      return sendResponseSuccess(200, reply, 'Success', updatedFolder);
+      return sendResponseSuccess(200, reply, 'Thành công', updatedFolder);
     },
 
     deleteFolderHandler: async (
@@ -153,13 +153,13 @@ export const mediaController = (fastify: FastifyInstance) => {
     ) => {
       const id = req.params?.id;
       if (!id) {
-        return sendResponseError(400, reply, 'Missing id parameters');
+        return sendResponseError(400, reply, 'Thiếu tham số ID');
       }
       const result = await service.deleteFolder(id);
       return sendResponseSuccess(
         200,
         reply,
-        `Remove ${result.name} successfully`
+        `Xóa ${result.name} thành công`
       );
     },
   };

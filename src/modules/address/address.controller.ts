@@ -12,7 +12,7 @@ export const addressController = (fastify: FastifyInstance) => {
     getMyAddressesHandler: async (req: FastifyRequest, reply: FastifyReply) => {
       const userId = (req as any).user.id;
       const result = await service.getMyAddresses(userId);
-      return sendResponseSuccess(200, reply, 'Get my addresses success', result);
+      return sendResponseSuccess(200, reply, 'Lấy danh sách địa chỉ thành công', result);
     },
 
     createAddressHandler: async (
@@ -21,7 +21,7 @@ export const addressController = (fastify: FastifyInstance) => {
     ) => {
       const userId = (req as any).user.id;
       const result = await service.createAddress(userId, req.body);
-      return sendResponseSuccess(201, reply, 'Create address success', result);
+      return sendResponseSuccess(201, reply, 'Thêm địa chỉ mới thành công', result);
     },
 
     updateAddressHandler: async (
@@ -30,7 +30,7 @@ export const addressController = (fastify: FastifyInstance) => {
     ) => {
       const userId = (req as any).user.id;
       const result = await service.updateAddress(req.params.id, userId, req.body);
-      return sendResponseSuccess(200, reply, 'Update address success', result);
+      return sendResponseSuccess(200, reply, 'Cập nhật địa chỉ thành công', result);
     },
 
     deleteAddressHandler: async (
@@ -39,7 +39,7 @@ export const addressController = (fastify: FastifyInstance) => {
     ) => {
       const userId = (req as any).user.id;
       await service.deleteAddress(req.params.id, userId);
-      return sendResponseSuccess(200, reply, 'Delete address success');
+      return sendResponseSuccess(200, reply, 'Xóa địa chỉ thành công');
     },
 
     setDefaultAddressHandler: async (
@@ -48,7 +48,7 @@ export const addressController = (fastify: FastifyInstance) => {
     ) => {
       const userId = (req as any).user.id;
       const result = await service.setDefaultAddress(req.params.id, userId);
-      return sendResponseSuccess(200, reply, 'Set default address success', result);
+      return sendResponseSuccess(200, reply, 'Đặt địa chỉ mặc định thành công', result);
     },
   };
 };

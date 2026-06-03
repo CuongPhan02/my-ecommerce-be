@@ -11,7 +11,7 @@ export class CartService {
   async getCart(userId: string) {
     const cart = await this.repo.getCartDetails(userId);
     if (!cart) {
-      throw new NotFoundError('Cart not found');
+      throw new NotFoundError('Không tìm thấy giỏ hàng');
     }
     return cart;
   }
@@ -20,19 +20,19 @@ export class CartService {
     // 1. Check if variant exists
     const variant = await this.repo.findProductVariant(productVariantId);
     if (!variant) {
-      throw new NotFoundError('Product variant not found');
+      throw new NotFoundError('Sản phẩm biến thể không tồn tại');
     }
 
     // 2. Validate stock quantity
     const stock = variant.stockQuantity ?? 0;
     if (stock < quantity) {
-      throw new BadRequestError('Requested quantity exceeds available stock');
+      throw new BadRequestError('Số lượng yêu cầu vượt quá số lượng tồn kho');
     }
 
     // 3. Get or create cart for user
     const cart = await this.repo.getOrCreateCart(userId);
     if (!cart) {
-      throw new NotFoundError('Failed to create or retrieve cart');
+      throw new NotFoundError('Không thể tạo hoặc lấy giỏ hàng');
     }
 
     // 4. Add item to cart
@@ -46,7 +46,7 @@ export class CartService {
     // 1. Get user cart
     const cart = await this.repo.getOrCreateCart(userId);
     if (!cart) {
-      throw new NotFoundError('Failed to create or retrieve cart');
+      throw new NotFoundError('Không thể tạo hoặc lấy giỏ hàng');
     }
 
     // 2. Check if item exists in this cart
@@ -54,18 +54,18 @@ export class CartService {
     const existingItem = cartDetails?.items.find((i) => i.id === itemId);
 
     if (!existingItem) {
-      throw new NotFoundError('Cart item not found');
+      throw new NotFoundError('Sản phẩm trong giỏ hàng không tồn tại');
     }
 
     // 3. Check variant stock
     const variant = await this.repo.findProductVariant(existingItem.productVariantId);
     if (!variant) {
-      throw new NotFoundError('Product variant not found');
+      throw new NotFoundError('Sản phẩm biến thể không tồn tại');
     }
 
     const stock = variant.stockQuantity ?? 0;
     if (stock < quantity) {
-      throw new BadRequestError('Requested quantity exceeds available stock');
+      throw new BadRequestError('Số lượng yêu cầu vượt quá số lượng tồn kho');
     }
 
     // 4. Update quantity
@@ -79,7 +79,7 @@ export class CartService {
     // 1. Get user cart
     const cart = await this.repo.getOrCreateCart(userId);
     if (!cart) {
-      throw new NotFoundError('Failed to create or retrieve cart');
+      throw new NotFoundError('Không thể tạo hoặc lấy giỏ hàng');
     }
 
     // 2. Check if item exists in this cart
@@ -87,7 +87,7 @@ export class CartService {
     const existingItem = cartDetails?.items.find((i) => i.id === itemId);
 
     if (!existingItem) {
-      throw new NotFoundError('Cart item not found');
+      throw new NotFoundError('Sản phẩm trong giỏ hàng không tồn tại');
     }
 
     // 3. Remove item
@@ -100,7 +100,7 @@ export class CartService {
   async clearCart(userId: string) {
     const cart = await this.repo.getOrCreateCart(userId);
     if (!cart) {
-      throw new NotFoundError('Failed to create or retrieve cart');
+      throw new NotFoundError('Không thể tạo hoặc lấy giỏ hàng');
     }
     await this.repo.clearCart(cart.id);
     return this.getCart(userId);

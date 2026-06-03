@@ -64,7 +64,7 @@ export class ProductRepository {
     }
 
     if (!attr) {
-      throw new Error(`Failed to create attribute: ${name}`);
+      throw new Error(`Không thể tạo thuộc tính: ${name}`);
     }
 
     attributeCache.set(name, attr.id);
@@ -95,7 +95,7 @@ export class ProductRepository {
     }
 
     if (!val) {
-      throw new Error(`Failed to create attribute value: ${value}`);
+      throw new Error(`Không thể tạo giá trị thuộc tính: ${value}`);
     }
 
     attributeValueCache.set(cacheKey, val.id);
@@ -184,7 +184,7 @@ export class ProductRepository {
         .returning();
 
       if (!newProduct) {
-        throw new Error('Failed to create product');
+        throw new Error('Không thể tạo sản phẩm');
       }
 
       // 2. Create Product Images

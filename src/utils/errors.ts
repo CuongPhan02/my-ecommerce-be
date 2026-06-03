@@ -25,37 +25,37 @@ export class ValidationError extends AppError {
 }
 
 export class UnauthorizedError extends AppError {
-  constructor(message: string = 'Unauthorized') {
+  constructor(message: string = 'Không có quyền truy cập') {
     super(message, 401);
   }
 }
 
 export class ForbiddenError extends AppError {
-  constructor(message: string = 'Forbidden') {
+  constructor(message: string = 'Truy cập bị từ chối') {
     super(message, 403);
   }
 }
 
 export class NotFoundError extends AppError {
-  constructor(message: string = 'Resource not found') {
+  constructor(message: string = 'Không tìm thấy tài nguyên') {
     super(message, 404);
   }
 }
 
 export class ConflictError extends AppError {
-  constructor(message: string = 'Conflict') {
+  constructor(message: string = 'Xung đột dữ liệu') {
     super(message, 409);
   }
 }
 
 export class TooManyRequestsError extends AppError {
-  constructor(message: string = 'Too many requests') {
+  constructor(message: string = 'Quá nhiều yêu cầu') {
     super(message, 429);
   }
 }
 
 export class BadRequestError extends AppError {
-  constructor(message: string = 'Bad request') {
+  constructor(message: string = 'Yêu cầu không hợp lệ') {
     super(message, 400);
   }
 }
@@ -63,13 +63,13 @@ export class BadRequestError extends AppError {
 //Unprocessable Entity (khi dữ liệu hợp lệ cú pháp, nhưng sai về ngữ nghĩa) vd:  Đã gửi OTP nhưng OTP hết hạn
 //Đã order nhưng sản phẩm hết hàng
 export class UnprocessableEntityError extends AppError {
-  constructor(message: string = 'Unprocessable entity') {
+  constructor(message: string = 'Không thể xử lý yêu cầu') {
     super(message, 422);
   }
 }
 
 export class RefreshTokenExpiredError extends UnauthorizedError {
-  constructor(message = 'Refresh token has expired') {
+  constructor(message = 'Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại') {
     super(message);
   }
 }

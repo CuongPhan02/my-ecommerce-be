@@ -47,7 +47,7 @@ class MediaService {
     if (folderId) {
       const folder = await this.repo.findFolderById(folderId);
       if (!folder) {
-        throw new NotFoundError('Target folder not found');
+        throw new NotFoundError('Thư mục mục tiêu không tồn tại');
       }
       return folder;
     } else {
@@ -84,7 +84,7 @@ class MediaService {
         ),
       {
         serviceName: 'Imagekit',
-        errorMessage: 'Failed to upload image.',
+        errorMessage: 'Tải ảnh lên thất bại.',
       }
     );
 
@@ -138,7 +138,7 @@ class MediaService {
           // For now, let's skip invalid files or throw?
           // Throwing is safer for "all or nothing" logic but difficult with streams.
           // Let's throw to be consistent with previous middleware behavior.
-          throw new AppError(`File type ${part.mimetype} is not allowed.`, 415);
+          throw new AppError(`Loại file ${part.mimetype} không được phép.`, 415);
         }
 
         const uploadPromise = handleExternalCall(
@@ -150,7 +150,7 @@ class MediaService {
             ),
           {
             serviceName: 'Imagekit',
-            errorMessage: 'Failed to upload image.',
+            errorMessage: 'Tải ảnh lên thất bại.',
           }
         ).then((uploadResult) => ({
           uploadResult,
@@ -175,7 +175,7 @@ class MediaService {
     );
 
     if (mediaToCreate.length === 0) {
-      throw new AppError('No valid files uploaded', 400);
+      throw new AppError('Không có file hợp lệ nào được tải lên', 400);
     }
 
     const newMedia = await this.repo.createManyMedia(mediaToCreate);
@@ -209,10 +209,10 @@ class MediaService {
   async deleteMediaSingle(data: DeleteMediaSingleInput) {
     const media = await this.repo.findUniqueMedia(data.id);
 
-    if (!media) throw new NotFoundError('Media not found');
+    if (!media) throw new NotFoundError('Không tìm thấy tệp tin');
 
     if (!media?.fileId)
-      throw new AppError('Media record is corrupted: fileId is missing', 500);
+      throw new AppError('Dữ liệu tệp tin bị hỏng: thiếu fileId', 500);
 
     await this.repo.deleteMediaSingle(data.id);
 
@@ -221,7 +221,7 @@ class MediaService {
       () => uploadImageKitProvider.deleteFile(media.fileId as string),
       {
         serviceName: 'Imagekit',
-        errorMessage: `Failed to delete file ${media.fileId} from ImageKit. It is now an orphan.`,
+        errorMessage: `Xóa tệp tin ${media.fileId} trên ImageKit thất bại.`,
       }
     ).catch(() => {
       // Ignore image kit deletion errors to not fail the request completely
@@ -247,13 +247,13 @@ class MediaService {
     const { ids } = data;
 
     if (!ids || ids.length === 0) {
-      return { count: 0, message: 'No IDs provided to delete.' };
+      return { count: 0, message: 'Không có ID nào được cung cấp để xóa.' };
     }
 
     const mediasToDelete = await this.repo.findManyMediaByIds(ids);
 
     if (mediasToDelete.length === 0) {
-      throw new NotFoundError('None of the provided IDs match any media.');
+      throw new NotFoundError('Không có ID nào được cung cấp khớp với tệp tin.');
     }
 
     const fileIdsToDelete = mediasToDelete
@@ -268,7 +268,7 @@ class MediaService {
           () => uploadImageKitProvider.deleteFile(fileId),
           {
             serviceName: 'Imagekit',
-            errorMessage: `Failed to delete file ${fileId} from ImageKit. It is now an orphan.`,
+            errorMessage: `Xóa tệp tin ${fileId} trên ImageKit thất bại.`,
           }
         ).catch(() => {
           // Ignore image kit deletion errors to not fail the request completely
@@ -280,7 +280,7 @@ class MediaService {
 
     return {
       count: deleteResult.count,
-      message: `${deleteResult.count} media item(s) deleted successfully.`,
+      message: `Đã xóa thành công ${deleteResult.count} tệp tin.`,
     };
   }
   // ============================================================================
@@ -314,7 +314,7 @@ class MediaService {
     );
     if (existing) {
       throw new ConflictError(
-        'A folder with this name already exists at this level.'
+        'Thư mục với tên này đã tồn tại ở cấp độ này.'
       );
     }
     
@@ -327,7 +327,7 @@ class MediaService {
       () => uploadImageKitProvider.createFolder(sanitizedName, parentFolderPath),
       {
         serviceName: 'Imagekit',
-        errorMessage: 'Failed to create folder on ImageKit.',
+        errorMessage: 'Không thể tạo thư mục trên ImageKit.',
       }
     );
 
@@ -341,7 +341,7 @@ class MediaService {
   async updateFolder(data: MediaFolderUpdateInput) {
     const folder = await this.repo.findById(data.id);
     if (!folder) {
-      throw new NotFoundError('Folder not found');
+      throw new NotFoundError('Không tìm thấy thư mục');
     }
     if (data.name && data.name !== folder.name) {
       const existing = await this.repo.findByNameAndParent(
@@ -359,11 +359,11 @@ class MediaService {
   async deleteFolder(id: string) {
     const folder = await this.repo.findById(id);
     if (!folder) {
-      throw new NotFoundError('Folder not found');
+      throw new NotFoundError('Không tìm thấy thư mục');
     }
 
     if (folder.media.length > 0 || folder.children.length > 0) {
-      throw new AppError('Cannot delete a non-empty folder.', 400);
+      throw new AppError('Không thể xóa thư mục không rỗng.', 400);
     }
 
     const deletedFolder = await this.repo.delete(id);
@@ -374,7 +374,7 @@ class MediaService {
       () => uploadImageKitProvider.deleteFolder(exactFolderPath),
       {
         serviceName: 'Imagekit',
-        errorMessage: `Failed to delete folder ${exactFolderPath} from ImageKit.`,
+        errorMessage: `Xóa thư mục ${exactFolderPath} trên ImageKit thất bại.`,
       }
     ).catch(() => {
       // already logged by handleExternalCall

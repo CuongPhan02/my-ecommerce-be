@@ -26,7 +26,7 @@ export class OrderService {
   // ======= ADMIN: Lấy chi tiết đơn hàng =======
   async getOrderById(id: string) {
     const order = await this.repo.getOrderById(id);
-    if (!order) throw new NotFoundError('Order not found');
+    if (!order) throw new NotFoundError('Không tìm thấy đơn hàng');
     return order;
   }
 
@@ -54,7 +54,7 @@ export class OrderService {
   // ======= USER: Lấy chi tiết đơn hàng của tôi =======
   async getMyOrderById(orderId: string, userId: string) {
     const order = await this.repo.getMyOrderById(orderId, userId);
-    if (!order) throw new NotFoundError('Order not found');
+    if (!order) throw new NotFoundError('Không tìm thấy đơn hàng');
     return order;
   }
 
@@ -67,7 +67,7 @@ export class OrderService {
     if (shippingAddressId) {
       const address = await this.repo.findAddressById(shippingAddressId, userId);
       if (!address) {
-        throw new NotFoundError('Shipping address not found');
+        throw new NotFoundError('Không tìm thấy địa chỉ giao hàng');
       }
     } else {
       // Ghép thông tin Họ tên, SĐT, Email và Ghi chú giao hàng vào trường street để bảo toàn dữ liệu
@@ -92,7 +92,7 @@ export class OrderService {
     // 2. Kiểm tra giỏ hàng của người dùng
     const cart = await this.repo.findActiveCartWithItems(userId);
     if (!cart || !cart.items || cart.items.length === 0) {
-      throw new BadRequestError('Cart is empty');
+      throw new BadRequestError('Giỏ hàng trống');
     }
 
     // 3. Tính toán tổng tiền sản phẩm (Subtotal) và kiểm tra tồn kho
@@ -102,7 +102,7 @@ export class OrderService {
     for (const item of cart.items) {
       const variant = item.productVariant;
       if (!variant) {
-        throw new NotFoundError('Product variant not found in one of the cart items');
+        throw new NotFoundError('Không tìm thấy biến thể sản phẩm trong giỏ hàng');
       }
 
       // Kiểm tra số lượng tồn kho

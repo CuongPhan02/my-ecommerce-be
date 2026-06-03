@@ -27,7 +27,7 @@ export class AuthService {
     const existingUser = await this.repo.findUserByEmail(data.email);
 
     if (existingUser) {
-      throw new ConflictError('User already exists');
+      throw new ConflictError('Người dùng đã tồn tại');
     }
 
     const user = await this.repo.createUser(data);
@@ -60,7 +60,7 @@ export class AuthService {
     const findUserByEmail = await this.repo.findUserByEmail(data.email);
 
     if (!findUserByEmail) {
-      throw new NotFoundError('User not found');
+      throw new NotFoundError('Không tìm thấy người dùng');
     }
 
     const isValid = await comparePassword(
@@ -69,11 +69,11 @@ export class AuthService {
     );
 
     if (!isValid) {
-      throw new NotFoundError('Invalid email or password (Password not match)');
+      throw new NotFoundError('Email hoặc mật khẩu không chính xác');
     }
 
     if (!findUserByEmail.emailVerified) {
-      throw new NotFoundError('Email not verified');
+      throw new NotFoundError('Email chưa được xác thực');
     }
 
     const accessToken = server.jwt.sign({
@@ -121,7 +121,7 @@ export class AuthService {
     if (!response.ok) {
       const errorText = await response.text();
       console.error('Google Token Exchange Error:', errorText);
-      throw new BadRequestError('Failed to exchange code for token');
+      throw new BadRequestError('Không thể đổi mã lấy token Google');
     }
 
     const data = (await response.json()) as {
@@ -142,7 +142,7 @@ export class AuthService {
     );
 
     if (!response.ok) {
-      throw new BadRequestError('Failed to get user info from Google');
+      throw new BadRequestError('Không thể lấy thông tin người dùng từ Google');
     }
 
     const data = (await response.json()) as {
@@ -170,7 +170,7 @@ export class AuthService {
     const googleUser = await this.getGoogleUserInfo(access_token);
 
     if (!googleUser.verified_email) {
-      throw new BadRequestError('Google email not verified');
+      throw new BadRequestError('Email Google chưa được xác thực');
     }
 
     // 3. Find user by Google ID or Email
@@ -248,11 +248,11 @@ export class AuthService {
     const findRefreshToken = await this.repo.findRefreshToken(refreshToken);
 
     if (!findRefreshToken) {
-      throw new NotFoundError('Refresh token not found');
+      throw new NotFoundError('Không tìm thấy token refresh');
     }
 
     await this.repo.deleteRefreshToken(refreshToken);
-    return { message: 'Logged out successfully' };
+    return { message: 'Đăng xuất thành công' };
   }
 
   async refresh(
@@ -264,19 +264,19 @@ export class AuthService {
     const findRefreshToken = await this.repo.findRefreshToken(refreshToken);
 
     if (!findRefreshToken) {
-      throw new NotFoundError('Refresh token not found');
+      throw new NotFoundError('Không tìm thấy token refresh');
     }
 
     if (findRefreshToken.revoked) {
-      throw new UnauthorizedError('Refresh token revoked');
+      throw new UnauthorizedError('Token refresh đã bị thu hồi');
     }
     if (findRefreshToken.expiresAt < new Date()) {
-      throw new UnauthorizedError('Refresh token expired');
+      throw new UnauthorizedError('Token refresh đã hết hạn');
     }
     const findUserById = await this.repo.findUserById(findRefreshToken.userId);
 
     if (!findUserById) {
-      throw new NotFoundError('User not found');
+      throw new NotFoundError('Không tìm thấy người dùng');
     }
 
     const accessToken = server.jwt.sign({
@@ -318,20 +318,20 @@ export class AuthService {
   async getProfile(userId: string) {
     const user = await this.repo.getProfile(userId);
 
-    if (!user) throw new NotFoundError('User not found');
+    if (!user) throw new NotFoundError('Không tìm thấy người dùng');
     return user;
   }
 
   async verifyEmail(email: string, token: string) {
     const user = await this.repo.findUserByEmail(email);
-    if (!user) throw new NotFoundError('User not found');
+    if (!user) throw new NotFoundError('Không tìm thấy người dùng');
     if (user.verificationToken !== token)
-      throw new UnauthorizedError('Invalid token');
+      throw new UnauthorizedError('Mã xác thực không hợp lệ');
     if (
       user.verificationTokenExpires &&
       user.verificationTokenExpires < new Date()
     ) {
-      throw new UnauthorizedError('Token expired');
+      throw new UnauthorizedError('Mã xác thực đã hết hạn');
     }
     user.emailVerified = true;
     user.verificationToken = null;
@@ -342,8 +342,8 @@ export class AuthService {
 
   async resendVerificationEmail(email: string, urlRedirect?: string) {
     const user = await this.repo.findUserByEmail(email);
-    if (!user) throw new NotFoundError('User not found');
-    if (user.emailVerified) throw new BadRequestError('User already verified');
+    if (!user) throw new NotFoundError('Không tìm thấy người dùng');
+    if (user.emailVerified) throw new BadRequestError('Email đã được xác thực trước đó');
 
     user.verificationTokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
     await this.repo.updateUser(user);
@@ -352,7 +352,7 @@ export class AuthService {
 
     await BrevoProvider.sendReactMail(
       user.email,
-      'RESEND VERIFICATION EMAIL',
+      'GỬI LẠI EMAIL XÁC THỰC',
       'WelcomeEmail',
       {
         name: user.email,
@@ -364,13 +364,13 @@ export class AuthService {
       }
     );
 
-    return { message: 'Verification email sent successfully' };
+    return { message: 'Email xác thực đã được gửi thành công' };
   }
 
   async forgotPassword(email: string, urlRedirect?: string) {
     const user = await this.repo.findUserByEmail(email);
-    if (!user) throw new NotFoundError('User not found');
-    if (!user.emailVerified) throw new BadRequestError('User not verified');
+    if (!user) throw new NotFoundError('Không tìm thấy người dùng');
+    if (!user.emailVerified) throw new BadRequestError('Email chưa được xác thực');
 
     const resetToken = crypto.randomBytes(32).toString('hex');
     const resetTokenExpires = new Date(Date.now() + 3600000); // 1 hour
@@ -384,7 +384,7 @@ export class AuthService {
 
     await BrevoProvider.sendReactMail(
       user.email,
-      'FORGOT PASSWORD',
+      'QUÊN MẬT KHẨU',
       'ResetPasswordEmail',
       {
         name: user.email,
@@ -394,24 +394,24 @@ export class AuthService {
       }
     );
 
-    return { message: 'Reset password email sent successfully' };
+    return { message: 'Email đặt lại mật khẩu đã được gửi thành công' };
   }
 
   async resetPassword(email: string, token: string, password?: string) {
     const user = await this.repo.findUserByEmail(email);
-    if (!user) throw new NotFoundError('User not found');
-    if (!user.emailVerified) throw new BadRequestError('User not verified');
+    if (!user) throw new NotFoundError('Không tìm thấy người dùng');
+    if (!user.emailVerified) throw new BadRequestError('Email chưa được xác thực');
 
     if (
       user.resetPasswordToken !== token ||
       !user.resetPasswordExpires ||
       user.resetPasswordExpires < new Date()
     ) {
-      throw new UnauthorizedError('Invalid or expired reset token');
+      throw new UnauthorizedError('Mã đặt lại mật khẩu không hợp lệ hoặc đã hết hạn');
     }
 
     if (!password) {
-      throw new BadRequestError('Password is required');
+      throw new BadRequestError('Mật khẩu là bắt buộc');
     }
 
     const hashedPassword = await hashPassword(password);
@@ -421,18 +421,18 @@ export class AuthService {
 
     await this.repo.updateUser(user);
 
-    return { message: 'Password reset successfully' };
+    return { message: 'Đặt lại mật khẩu thành công' };
   }
 
   async updateProfile(userId: string, data: UpdateProfileInput) {
     const user = await this.repo.findUserById(userId);
-    if (!user) throw new NotFoundError('User not found');
+    if (!user) throw new NotFoundError('Không tìm thấy người dùng');
     return this.repo.updateProfile(userId, data);
   }
 
   async changePassword(userId: string, data: ChangePasswordInput) {
     const user = await this.repo.findUserById(userId);
-    if (!user) throw new NotFoundError('User not found');
+    if (!user) throw new NotFoundError('Không tìm thấy người dùng');
 
     if (!user.password) {
       throw new BadRequestError('Mật khẩu của tài khoản đăng nhập Google không thể thay đổi theo cách thông thường');
@@ -446,6 +446,6 @@ export class AuthService {
     const hashedPassword = await hashPassword(data.newPassword);
     await this.repo.updatePassword(userId, hashedPassword);
 
-    return { message: 'Password updated successfully' };
+    return { message: 'Cập nhật mật khẩu thành công' };
   }
 }

@@ -27,28 +27,28 @@ export const refreshTokenSchema = z.object({
 });
 
 export const forgotPasswordSchema = z.object({
-  email: z.email({ message: 'Please enter valid email address' }),
+  email: z.email({ message: 'Vui lòng nhập địa chỉ email hợp lệ' }),
   urlRedirect: z.string().url().optional(),
 });
 
 export const resetPasswordSchema = z.object({
-  email: z.email({ message: 'Please enter valid email address' }),
+  email: z.email({ message: 'Vui lòng nhập địa chỉ email hợp lệ' }),
   password: z.string().min(6),
   token: z.string(),
 });
 
 export const verifyEmailSchema = z.object({
-  email: z.email({ message: 'Please enter valid email address' }),
+  email: z.email({ message: 'Vui lòng nhập địa chỉ email hợp lệ' }),
   token: z.string(),
 });
 
 export const resendVerifyEmailSchema = z.object({
-  email: z.email({ message: 'Please enter valid email address' }),
+  email: z.email({ message: 'Vui lòng nhập địa chỉ email hợp lệ' }),
   urlRedirect: z.string().url().optional(),
 });
 
 export const googleLoginSchema = z.object({
-  code: z.string().min(1, 'Google Code is required'),
+  code: z.string().min(1, 'Mã Google là bắt buộc'),
   urlRedirect: z.string().url().optional(),
   isMobile: z.boolean().optional(),
 });

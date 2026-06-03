@@ -7,7 +7,7 @@ import {
 export const SYSTEM_MENUS: CreateNavigationDTO[] = [
   {
     type: 'MAIN_LINK',
-    label: 'Home',
+    label: 'Trang chủ',
     href: '/',
     displayOrder: 1,
     isSystem: true,
@@ -16,7 +16,7 @@ export const SYSTEM_MENUS: CreateNavigationDTO[] = [
   },
   {
     type: 'MAIN_LINK',
-    label: 'Shop',
+    label: 'Cửa hàng',
     href: '/shop',
     displayOrder: 2,
     isSystem: true,
@@ -25,7 +25,7 @@ export const SYSTEM_MENUS: CreateNavigationDTO[] = [
   },
   {
     type: 'MAIN_LINK',
-    label: 'About',
+    label: 'Giới thiệu',
     href: '/about',
     displayOrder: 3,
     isSystem: true,
@@ -34,7 +34,7 @@ export const SYSTEM_MENUS: CreateNavigationDTO[] = [
   },
   {
     type: 'MAIN_LINK',
-    label: 'Contact',
+    label: 'Liên hệ',
     href: '/contact',
     displayOrder: 4,
     isSystem: true,
@@ -72,21 +72,21 @@ export class NavigationService {
 
   async getNavigationById(id: string) {
     const nav = await this.repo.getById(id);
-    if (!nav) throw new Error('Navigation not found');
+    if (!nav) throw new Error('Không tìm thấy menu điều hướng');
     return nav;
   }
 
   async updateNavigation(id: string, data: UpdateNavigationDTO) {
     const nav = await this.repo.getById(id);
-    if (!nav) throw new Error('Navigation not found');
+    if (!nav) throw new Error('Không tìm thấy menu điều hướng');
 
     return await this.repo.update(id, data);
   }
 
   async deleteNavigation(id: string) {
     const nav = await this.repo.getById(id);
-    if (!nav) throw new Error('Navigation not found');
-    if (nav.isSystem) throw new Error('Cannot delete a system navigation menu');
+    if (!nav) throw new Error('Không tìm thấy menu điều hướng');
+    if (nav.isSystem) throw new Error('Không thể xóa menu điều hướng hệ thống');
 
     return await this.repo.delete(id);
   }

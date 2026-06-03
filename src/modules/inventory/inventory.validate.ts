@@ -12,18 +12,18 @@ export const inventoryQuerySchema = z.object({
 export type InventoryQueryType = z.infer<typeof inventoryQuerySchema>;
 
 export const importStockSchema = z.object({
-  productVariantId: z.string().min(1, 'Product Variant ID is required'),
-  quantity: z.number().int().positive('Import quantity must be greater than 0'),
-  purchasePrice: z.number().positive('Purchase price must be greater than 0'),
-  supplier: z.string().min(1, 'Supplier/Factory name is required'),
+  productVariantId: z.string().min(1, 'ID biến thể sản phẩm là bắt buộc'),
+  quantity: z.number().int().positive('Số lượng nhập phải lớn hơn 0'),
+  purchasePrice: z.number().positive('Giá nhập phải lớn hơn 0'),
+  supplier: z.string().min(1, 'Tên nhà cung cấp/nhà máy là bắt buộc'),
 });
 
 export type ImportStockType = z.infer<typeof importStockSchema>;
 
 export const adjustStockSchema = z.object({
-  productVariantId: z.string().min(1, 'Product Variant ID is required'),
-  quantity: z.number().int().min(0, 'Adjusted quantity must be 0 or greater'),
-  reason: z.string().min(5, 'Reason must be at least 5 characters long'),
+  productVariantId: z.string().min(1, 'ID biến thể sản phẩm là bắt buộc'),
+  quantity: z.number().int().min(0, 'Số lượng điều chỉnh phải từ 0 trở lên'),
+  reason: z.string().min(5, 'Lý do phải có ít nhất 5 ký tự'),
 });
 
 export type AdjustStockType = z.infer<typeof adjustStockSchema>;
@@ -38,7 +38,7 @@ export const inventoryHistoryQuerySchema = z.object({
 export type InventoryHistoryQueryType = z.infer<typeof inventoryHistoryQuerySchema>;
 
 export const inventoryParamSchema = z.object({
-  id: z.string().min(1, 'ID is required'),
+  id: z.string().min(1, 'ID là bắt buộc'),
 });
 
 export type InventoryParamType = z.infer<typeof inventoryParamSchema>;

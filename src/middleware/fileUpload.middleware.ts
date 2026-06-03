@@ -13,11 +13,11 @@ async function processSingleFile(req: FastifyRequest, reply: FastifyReply) {
   });
 
   if (!data) {
-    throw new AppError('No file uploaded.', 400);
+    throw new AppError('Không có tệp tin nào được tải lên.', 400);
   }
 
   if (!ALLOW_COMMOM_FILE_TYPES_GALLERY.includes(data.mimetype)) {
-    throw new AppError('File type is invalid.', 415);
+    throw new AppError('Loại tệp tin không hợp lệ.', 415);
   }
 
   // Attach the file stream and metadata directly to the request
@@ -30,7 +30,7 @@ async function processSingleFile(req: FastifyRequest, reply: FastifyReply) {
 
 async function processMultipleFiles(req: FastifyRequest, reply: FastifyReply) {
   if (!req.isMultipart()) {
-    throw new AppError('Request is not multipart', 400);
+    throw new AppError('Yêu cầu không phải là định dạng multipart', 400);
   }
 }
 

@@ -9,7 +9,7 @@ export const authenticate = async (
     const token = req.headers.authorization?.split(' ')[1];
 
     if (!token) {
-      throw new UnauthorizedError('Authentication required. Token missing.');
+      throw new UnauthorizedError('Yêu cầu xác thực. Thiếu token.');
     }
 
     // Verify token using fastify-jwt
@@ -17,7 +17,7 @@ export const authenticate = async (
 
     // Optional: Check if user still exists in DB if needed, but for now rely on JWT validity
   } catch (err) {
-    throw new UnauthorizedError('Invalid or expired token');
+    throw new UnauthorizedError('Token không hợp lệ hoặc đã hết hạn');
   }
 };
 
@@ -26,11 +26,11 @@ export const authorize = (roles: string[]) => {
     const user = req.user as { role: string };
 
     if (!user || !user.role) {
-      throw new UnauthorizedError('User role not found');
+      throw new UnauthorizedError('Không tìm thấy vai trò người dùng');
     }
 
     if (!roles.includes(user.role)) {
-      throw new ForbiddenError('Access denied');
+      throw new ForbiddenError('Truy cập bị từ chối');
     }
   };
 };

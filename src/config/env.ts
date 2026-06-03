@@ -13,12 +13,12 @@ const envSchema = z.object({
   BASE_URL: z.url('BASE_URL must be a valid URL'),
 
   // --- Database ---
-  DATABASE_URL: z.string().min(1, 'Database URL is required'),
+  DATABASE_URL: z.string().min(1, 'DATABASE_URL là bắt buộc'),
 
   // --- URLs ---
   SENTRY_URL: z
     .string()
-    .url('Invalid Sentry URL format')
+    .url('Định dạng URL Sentry không hợp lệ')
     .optional()
     .or(z.literal('')),
   CLIENT_ORIGIN: z.url('CLIENT_ORIGIN must be a valid URL'),
@@ -29,14 +29,14 @@ const envSchema = z.object({
   // --- Auth / JWT ---
   ACCESS_TOKEN_SECRET_SIGNATURE: z
     .string()
-    .min(1, 'Access token secret is required'),
+    .min(1, 'ACCESS_TOKEN_SECRET_SIGNATURE là bắt buộc'),
   ACCESS_TOKEN_LIFE: z
     .string()
     .regex(/^\d+[mhd]$/, "Format must be like '1h', '7d', or '30m'"),
 
   REFRESH_TOKEN_SECRET_SIGNATURE: z
     .string()
-    .min(1, 'Refresh token secret is required'),
+    .min(1, 'REFRESH_TOKEN_SECRET_SIGNATURE là bắt buộc'),
   REFRESH_TOKEN_LIFE: z
     .string()
     .regex(/^\d+[mhd]$/, "Format must be like '1h', '7d', or '30m'"),
@@ -44,34 +44,34 @@ const envSchema = z.object({
   BCRYPT_ROUNDS: z.coerce.number().default(10),
 
   // --- Mail Service (Brevo) ---
-  BREVO_API_KEY: z.string().min(1, 'Brevo API key is required'),
-  ADMIN_EMAIL_ADDRESS: z.string().email('Invalid admin email address'),
-  ADMIN_EMAIL_NAME: z.string().min(1, 'Admin email name is required'),
+  BREVO_API_KEY: z.string().min(1, 'BREVO_API_KEY là bắt buộc'),
+  ADMIN_EMAIL_ADDRESS: z.string().email('Địa chỉ email admin không hợp lệ'),
+  ADMIN_EMAIL_NAME: z.string().min(1, 'Tên email admin là bắt buộc'),
 
   // --- Security ---
-  COOKIE_SECRET: z.string().min(1, 'Cookie secret is required'),
+  COOKIE_SECRET: z.string().min(1, 'COOKIE_SECRET là bắt buộc'),
 
   // --- Image Hosting (ImageKit) ---
-  IMAGE_KIT_PUBLIC_KEY: z.string().min(1, 'ImageKit public key is required'),
-  IMAGE_KIT_PRIVATE_KEY: z.string().min(1, 'ImageKit private key is required'),
+  IMAGE_KIT_PUBLIC_KEY: z.string().min(1, 'IMAGE_KIT_PUBLIC_KEY là bắt buộc'),
+  IMAGE_KIT_PRIVATE_KEY: z.string().min(1, 'IMAGE_KIT_PRIVATE_KEY là bắt buộc'),
   IMAGE_KIT_URL_ENDPOINT: z
     .string()
-    .url('ImageKit endpoint must be a valid URL'),
+    .url('IMAGE_KIT_URL_ENDPOINT phải là một URL hợp lệ'),
 
   // --- Social Login ---
-  GOOGLE_CLIENT_ID: z.string().min(1, 'Google Client ID is required'),
-  GOOGLE_CLIENT_SECRET: z.string().min(1, 'Google Client Secret is required'),
-  GOOGLE_REDIRECT_URI: z.url('Google Redirect URI is required'),
+  GOOGLE_CLIENT_ID: z.string().min(1, 'GOOGLE_CLIENT_ID là bắt buộc'),
+  GOOGLE_CLIENT_SECRET: z.string().min(1, 'GOOGLE_CLIENT_SECRET là bắt buộc'),
+  GOOGLE_REDIRECT_URI: z.url('GOOGLE_REDIRECT_URI là bắt buộc'),
 
   // --- Super Admin Seeding ---
-  SUPER_ADMIN_EMAIL: z.email('Invalid super admin email address').optional(),
+  SUPER_ADMIN_EMAIL: z.email('Địa chỉ email super admin không hợp lệ').optional(),
   SUPER_ADMIN_PASSWORD: z
     .string()
-    .min(6, 'Super admin password must be at least 6 chars')
+    .min(6, 'Mật khẩu super admin phải có ít nhất 6 ký tự')
     .optional(),
   SUPER_ADMIN_NAME: z
     .string()
-    .min(1, 'Super admin name is required')
+    .min(1, 'Tên super admin là bắt buộc')
     .optional(),
 
   // --- Scalar API Key ---
@@ -83,17 +83,17 @@ const envSchema = z.object({
   // --- VNPAY Payment Gateway ---
   VNP_TMN_CODE: z
     .string()
-    .min(1, 'VNP_TMN_CODE is required')
+    .min(1, 'VNP_TMN_CODE là bắt buộc')
     .transform((val) => val.trim()),
   VNP_HASH_SECRET: z
     .string()
-    .min(1, 'VNP_HASH_SECRET is required')
+    .min(1, 'VNP_HASH_SECRET là bắt buộc')
     .transform((val) => val.trim()),
   VNP_URL: z
-    .url('VNP_URL must be a valid URL')
+    .url('VNP_URL phải là một URL hợp lệ')
     .transform((val) => val.trim()),
   VNP_RETURN_URL: z
-    .url('VNP_RETURN_URL must be a valid URL')
+    .url('VNP_RETURN_URL phải là một URL hợp lệ')
     .transform((val) => val.trim()),
 });
 

@@ -347,7 +347,7 @@ export class OrderRepository {
           .where(eq(productVariants.id, item.productVariantId));
 
         if (!variant || (variant.stockQuantity ?? 0) < item.quantity) {
-          throw new Error(`Variant ${item.productVariantId} is out of stock`);
+          throw new Error(`Sản phẩm biến thể ${item.productVariantId} đã hết hàng`);
         }
 
         await tx
@@ -374,13 +374,13 @@ export class OrderRepository {
           })
           .returning();
         if (!newAddr) {
-          throw new Error('Failed to create custom shipping address');
+          throw new Error('Không thể tạo địa chỉ giao hàng tùy chỉnh');
         }
         finalAddressId = newAddr.id;
       }
 
       if (!finalAddressId) {
-        throw new Error('Shipping address is required');
+        throw new Error('Địa chỉ giao hàng là bắt buộc');
       }
 
       // 3. Tạo đơn hàng mới
@@ -397,7 +397,7 @@ export class OrderRepository {
         .returning();
 
       if (!newOrder) {
-        throw new Error('Failed to create order');
+        throw new Error('Không thể tạo đơn hàng');
       }
 
       // 4. Tạo chi tiết đơn hàng (Order Items)

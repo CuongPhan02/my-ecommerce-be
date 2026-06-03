@@ -26,7 +26,7 @@ export class RefundService {
   async getRefundById(id: string) {
     const refund = await this.repo.getRefundById(id);
     if (!refund) {
-      throw new NotFoundError('Refund request not found');
+      throw new NotFoundError('Không tìm thấy yêu cầu hoàn tiền');
     }
     return refund;
   }
@@ -35,16 +35,16 @@ export class RefundService {
     // Check if order exists
     const order = await this.repo.findOrderById(data.orderId);
     if (!order) {
-      throw new NotFoundError('Order not found');
+      throw new NotFoundError('Không tìm thấy đơn hàng');
     }
 
     if (order.userId !== userId) {
-      throw new BadRequestError('This order does not belong to you');
+      throw new BadRequestError('Đơn hàng này không thuộc về bạn');
     }
 
     // Check if order status allows refund (e.g. DELIVERED, RETURNED)
     if (order.status !== 'DELIVERED' && order.status !== 'RETURNED') {
-      throw new BadRequestError('Can only refund delivered or returned orders');
+      throw new BadRequestError('Chỉ có thể hoàn tiền cho đơn hàng đã giao hoặc đã trả hàng');
     }
 
     // Generate unique code REF-XXXXXX
@@ -62,7 +62,7 @@ export class RefundService {
   async approveRefund(id: string, data: ApproveRefundType) {
     const refund = await this.getRefundById(id);
     if (refund.status !== 'PENDING') {
-      throw new BadRequestError(`Cannot approve refund with status ${refund.status}`);
+      throw new BadRequestError(`Không thể duyệt hoàn tiền với trạng thái ${refund.status}`);
     }
 
     // Approve the refund
@@ -72,7 +72,7 @@ export class RefundService {
   async rejectRefund(id: string, data: RejectRefundType) {
     const refund = await this.getRefundById(id);
     if (refund.status !== 'PENDING') {
-      throw new BadRequestError(`Cannot reject refund with status ${refund.status}`);
+      throw new BadRequestError(`Không thể từ chối hoàn tiền với trạng thái ${refund.status}`);
     }
 
     return this.repo.rejectRefund(id, data.rejectReason);
