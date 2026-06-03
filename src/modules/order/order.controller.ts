@@ -69,6 +69,16 @@ export const orderController = (fastify: FastifyInstance) => {
       return sendResponseSuccess(200, reply, 'Get my order detail success', result);
     },
 
+    // ===== USER: Xác nhận đã nhận hàng =====
+    confirmReceiptHandler: async (
+      req: FastifyRequest<{ Params: { id: string } }>,
+      reply: FastifyReply
+    ) => {
+      const userId = (req as any).user?.id;
+      const result = await service.confirmReceipt(req.params.id, userId);
+      return sendResponseSuccess(200, reply, 'Xác nhận nhận hàng thành công', result);
+    },
+
     // ===== USER: ĐẶT HÀNG MỚI (CHECKOUT) =====
     createOrderHandler: async (
       req: FastifyRequest<{ Body: CreateOrderInput }>,

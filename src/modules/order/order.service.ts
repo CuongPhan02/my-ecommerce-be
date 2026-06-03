@@ -58,6 +58,23 @@ export class OrderService {
     return order;
   }
 
+  // ======= USER: XÁC NHẬN ĐÃ NHẬN HÀNG =======
+  async confirmReceipt(orderId: string, userId: string) {
+    const order = await this.getMyOrderById(orderId, userId);
+    
+    // Chỉ có thể xác nhận khi đơn hàng đang ở trạng thái SHIPPED (đã giao cho đơn vị vận chuyển)
+    // Hoặc nếu muốn thoáng hơn thì có thể cho phép khi ở trạng thái PROCESSING/SHIPPED
+    if (order.status === 'DELIVERED') {
+      throw new BadRequestError('Đơn hàng đã được xác nhận nhận hàng trước đó.');
+    }
+    
+    if (order.status === 'CANCELLED' || order.status === 'RETURNED') {
+      throw new BadRequestError('Không thể xác nhận nhận hàng cho đơn hàng đã hủy hoặc hoàn trả.');
+    }
+
+    return this.repo.updateOrder(orderId, { status: 'DELIVERED' });
+  }
+
   // ======= USER: ĐẶT HÀNG MỚI (CHECKOUT) =======
   async createOrder(userId: string, data: CreateOrderInput) {
     // 1. Kiểm tra địa chỉ giao hàng hợp lệ hoặc xử lý địa chỉ tùy chỉnh

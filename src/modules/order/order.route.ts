@@ -96,6 +96,21 @@ export const orderRoutes = (fastify: FastifyInstance) => {
     handler: controller.getMyOrderByIdHandler,
   });
 
+  // ======= USER: XÁC NHẬN ĐÃ NHẬN HÀNG ======= //
+  routeWithZod(fastify, {
+    url: '/my-orders/:id/confirm-receipt',
+    method: 'post',
+    disableValidator: true,
+    swaggerSchema: {
+      summary: 'Xác nhận đã nhận hàng',
+      description: 'Người dùng xác nhận đã nhận được hàng để có thể đánh giá sản phẩm.',
+      tags: [ORDER_TAG],
+      security: [{ bearerAuth: [] }],
+    },
+    preHandler: [authenticate],
+    handler: controller.confirmReceiptHandler,
+  });
+
   // ======= USER: ĐẶT HÀNG MỚI (CHECKOUT) ======= //
   routeWithZod(fastify, {
     url: '/',
