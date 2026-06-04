@@ -1,5 +1,5 @@
 import { Database } from '@/plugins/database';
-import { reviews, products, users, productVariants, orders } from '@/db/schema';
+import { reviews, products, users, productVariants, orders, orderItems } from '@/db/schema';
 import { eq, and, desc, asc, sql, or, like } from 'drizzle-orm';
 import { ReviewQueryType } from './review.validate';
 import { formatVND } from '@/utils/lib';
@@ -11,28 +11,38 @@ export class ReviewRepository {
   }
 
   async hasUserPurchasedProduct(userId: string, productId: string, productVariantId?: string): Promise<boolean> {
-    const userOrders = await this.db.query.orders.findMany({
-      where: and(
-        eq(orders.userId, userId),
-        eq(orders.status, 'DELIVERED')
-      ),
-      with: {
-        items: {
-          with: {
-            productVariant: true,
-          },
-        },
-      },
-    });
-
-    return userOrders.some(order => 
-      order.items.some(item => {
-        if (productVariantId) {
-          return item.productVariantId === productVariantId;
-        }
-        return item.productVariant?.productId === productId;
-      })
-    );
+    if (productVariantId) {
+      // Kiểm tra theo variant cụ thể
+      const result = await this.db
+        .select({ id: orderItems.id })
+        .from(orderItems)
+        .innerJoin(orders, eq(orderItems.orderId, orders.id))
+        .where(
+          and(
+            eq(orders.userId, userId),
+            eq(orders.status, 'DELIVERED'),
+            eq(orderItems.productVariantId, productVariantId)
+          )
+        )
+        .limit(1);
+      return result.length > 0;
+    } else {
+      // Kiểm tra theo productId — join thêm product_variants
+      const result = await this.db
+        .select({ id: orderItems.id })
+        .from(orderItems)
+        .innerJoin(orders, eq(orderItems.orderId, orders.id))
+        .innerJoin(productVariants, eq(orderItems.productVariantId, productVariants.id))
+        .where(
+          and(
+            eq(orders.userId, userId),
+            eq(orders.status, 'DELIVERED'),
+            eq(productVariants.productId, productId)
+          )
+        )
+        .limit(1);
+      return result.length > 0;
+    }
   }
 
   async hasUserReviewedProduct(userId: string, productId: string, productVariantId?: string): Promise<boolean> {
