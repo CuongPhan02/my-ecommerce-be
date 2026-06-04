@@ -27,7 +27,7 @@ export const inventoryController = (fastify: FastifyInstance) => {
       request: FastifyRequest<{ Body: ImportStockType }>,
       reply: FastifyReply
     ) => {
-      const userId = (request.user as any)?.userId;
+      const userId = (request as any).user?.id;
       const data = request.body;
       const result = await service.importStock(userId, data);
       return sendResponseSuccess(201, reply, 'Lập phiếu nhập hàng thành công', result);
@@ -37,7 +37,7 @@ export const inventoryController = (fastify: FastifyInstance) => {
       request: FastifyRequest<{ Body: AdjustStockType }>,
       reply: FastifyReply
     ) => {
-      const userId = (request.user as any)?.userId;
+      const userId = (request as any).user?.id;
       const data = request.body;
       const result = await service.adjustStock(userId, data);
       return sendResponseSuccess(200, reply, 'Cân đối kho hàng thành công', result);

@@ -19,7 +19,7 @@ export const reviewController = (fastify: FastifyInstance) => {
       request: FastifyRequest<{ Body: CreateReviewBodyType }>,
       reply: FastifyReply
     ) => {
-      const userId = (request.user as any)?.userId;
+      const userId = (request as any).user?.id;
       const data = request.body;
       const result = await service.createReview(userId, data);
       return sendResponseSuccess(201, reply, 'Đánh giá sản phẩm đã được gửi thành công.', result);
@@ -73,7 +73,7 @@ export const reviewController = (fastify: FastifyInstance) => {
       reply: FastifyReply
     ) => {
       const { id } = request.params;
-      const userId = (request.user as any)?.userId;
+      const userId = (request as any).user?.id;
       const data = request.body;
       const result = await service.adminReply(id, userId, data);
       return sendResponseSuccess(200, reply, 'Phản hồi đánh giá thành công.', result);

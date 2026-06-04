@@ -34,7 +34,7 @@ export const refundController = (fastify: FastifyInstance) => {
       request: FastifyRequest<{ Body: CreateRefundType }>,
       reply: FastifyReply
     ) => {
-      const userId = (request.user as any)?.userId;
+      const userId = (request as any).user?.id;
       const data = request.body;
       const result = await service.createRefund(userId, data);
       return sendResponseSuccess(201, reply, 'Refund request created successfully', result);
