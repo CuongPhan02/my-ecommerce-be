@@ -89,9 +89,15 @@ export class InventoryRepository {
       purchasePriceFormatted: formatVND(item.purchasePrice || 0),
     }));
 
+    const total = Number(totalResult);
+    const totalPages = Math.ceil(total / limit);
+
     return {
       data: formattedData,
-      total: totalResult,
+      total,
+      page,
+      limit,
+      totalPages,
     };
   }
 
@@ -195,9 +201,15 @@ export class InventoryRepository {
       purchasePriceFormatted: item.purchasePrice ? formatVND(item.purchasePrice) : null,
     }));
 
+    const total = Number(totalResult);
+    const totalPages = Math.ceil(total / limit);
+
     return {
       data: formattedData,
-      total: totalResult,
+      total,
+      page,
+      limit,
+      totalPages,
     };
   }
 }
