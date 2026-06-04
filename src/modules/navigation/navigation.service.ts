@@ -58,7 +58,7 @@ export class NavigationService {
     return await this.repo.getMegaMenuData();
   }
 
-  async createNavigation(data: CreateNavigationDTO) {
+  async createNavigation(data: CreateNavigationDTO & { megaMenu?: any }) {
     return await this.repo.create(data);
   }
 
@@ -76,7 +76,7 @@ export class NavigationService {
     return nav;
   }
 
-  async updateNavigation(id: string, data: UpdateNavigationDTO) {
+  async updateNavigation(id: string, data: UpdateNavigationDTO & { megaMenu?: any }) {
     const nav = await this.repo.getById(id);
     if (!nav) throw new Error('Không tìm thấy menu điều hướng');
 
