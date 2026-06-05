@@ -7,7 +7,7 @@ export const reviewQuerySchema = z.object({
   status: z.enum(['PENDING', 'APPROVED', 'HIDDEN']).optional(),
   rating: z.coerce.number().int().min(1).max(5).optional(),
   productId: z.string().optional(),
-  sort: z.enum(['desc', 'asc']).optional().default('desc'),
+  sort: z.enum(['desc', 'asc', 'newest', 'oldest', 'rating-desc', 'rating-asc']).optional().default('desc'),
 });
 
 export type ReviewQueryType = z.infer<typeof reviewQuerySchema>;

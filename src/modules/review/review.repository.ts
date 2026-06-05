@@ -173,11 +173,30 @@ export class ReviewRepository {
 
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
+    let orderByField;
+    switch (sort) {
+      case 'asc':
+      case 'oldest':
+        orderByField = asc(reviews.createdAt);
+        break;
+      case 'rating-desc':
+        orderByField = desc(reviews.rating);
+        break;
+      case 'rating-asc':
+        orderByField = asc(reviews.rating);
+        break;
+      case 'desc':
+      case 'newest':
+      default:
+        orderByField = desc(reviews.createdAt);
+        break;
+    }
+
     const results = await this.db.query.reviews.findMany({
       where: whereClause,
       limit,
       offset,
-      orderBy: sort === 'asc' ? asc(reviews.createdAt) : desc(reviews.createdAt),
+      orderBy: orderByField,
       with: {
         product: {
           with: {
