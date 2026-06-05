@@ -10,51 +10,48 @@ export class ReviewRepository {
     this.db = db;
   }
 
-  async hasUserPurchasedProduct(userId: string, productId: string, productVariantId?: string): Promise<boolean> {
-    if (productVariantId) {
-      // Kiểm tra theo variant cụ thể
-      const result = await this.db
-        .select({ id: orderItems.id })
-        .from(orderItems)
-        .innerJoin(orders, eq(orderItems.orderId, orders.id))
-        .where(
-          and(
-            eq(orders.userId, userId),
-            eq(orders.status, 'DELIVERED'),
-            eq(orderItems.productVariantId, productVariantId)
-          )
+  async getPurchasedProductVariantId(userId: string, productId: string): Promise<string | null> {
+    const result = await this.db
+      .select({ productVariantId: orderItems.productVariantId })
+      .from(orderItems)
+      .innerJoin(orders, eq(orderItems.orderId, orders.id))
+      .innerJoin(productVariants, eq(orderItems.productVariantId, productVariants.id))
+      .where(
+        and(
+          eq(orders.userId, userId),
+          eq(orders.status, 'DELIVERED'),
+          eq(productVariants.productId, productId)
         )
-        .limit(1);
-      return result.length > 0;
-    } else {
-      // Kiểm tra theo productId — join thêm product_variants
-      const result = await this.db
-        .select({ id: orderItems.id })
-        .from(orderItems)
-        .innerJoin(orders, eq(orderItems.orderId, orders.id))
-        .innerJoin(productVariants, eq(orderItems.productVariantId, productVariants.id))
-        .where(
-          and(
-            eq(orders.userId, userId),
-            eq(orders.status, 'DELIVERED'),
-            eq(productVariants.productId, productId)
-          )
-        )
-        .limit(1);
-      return result.length > 0;
-    }
+      )
+      .limit(1);
+    return result.length > 0 && result[0] ? result[0].productVariantId : null;
   }
 
-  async hasUserReviewedProduct(userId: string, productId: string, productVariantId?: string): Promise<boolean> {
-    const conditions = [
-      eq(reviews.userId, userId),
-      eq(reviews.productId, productId),
-    ];
-    if (productVariantId) {
-      conditions.push(eq(reviews.productVariantId, productVariantId));
-    }
+  async hasUserPurchasedProduct(userId: string, productId: string, _productVariantId?: string): Promise<boolean> {
+    // Luôn kiểm tra xem người dùng đã mua sản phẩm này chưa (bất kỳ biến thể nào)
+    const result = await this.db
+      .select({ id: orderItems.id })
+      .from(orderItems)
+      .innerJoin(orders, eq(orderItems.orderId, orders.id))
+      .innerJoin(productVariants, eq(orderItems.productVariantId, productVariants.id))
+      .where(
+        and(
+          eq(orders.userId, userId),
+          eq(orders.status, 'DELIVERED'),
+          eq(productVariants.productId, productId)
+        )
+      )
+      .limit(1);
+    return result.length > 0;
+  }
+
+  async hasUserReviewedProduct(userId: string, productId: string, _productVariantId?: string): Promise<boolean> {
+    // Tối đa 1 đánh giá cho mỗi người dùng trên mỗi sản phẩm
     const existing = await this.db.query.reviews.findFirst({
-      where: and(...conditions),
+      where: and(
+        eq(reviews.userId, userId),
+        eq(reviews.productId, productId)
+      ),
     });
     return !!existing;
   }
@@ -67,11 +64,18 @@ export class ReviewRepository {
     content: string;
     tags?: string[] | undefined;
   }) {
+    // Tự động tìm biến thể người dùng đã mua thực tế trong đơn hàng để gán vào review
+    let actualVariantId = data.productVariantId || null;
+    const purchasedVariantId = await this.getPurchasedProductVariantId(data.userId, data.productId);
+    if (purchasedVariantId) {
+      actualVariantId = purchasedVariantId;
+    }
+
     const [newReview] = await this.db
       .insert(reviews)
       .values({
         productId: data.productId,
-        productVariantId: data.productVariantId || null,
+        productVariantId: actualVariantId,
         userId: data.userId,
         rating: data.rating,
         content: data.content,
