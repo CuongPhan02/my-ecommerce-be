@@ -61,16 +61,18 @@ export const productController = (fastify: FastifyInstance) => {
         );
       }
 
-      const brandIds = req.query.brandIds
-        ? Array.isArray(req.query.brandIds)
-          ? req.query.brandIds
-          : [req.query.brandIds]
+      const rawBrandIds = req.query.brandIds || (req.query as any)['brandIds[]'];
+      const brandIds = rawBrandIds
+        ? Array.isArray(rawBrandIds)
+          ? rawBrandIds
+          : [rawBrandIds]
         : undefined;
 
-      const attributeValueIds = req.query.attributeValueIds
-        ? Array.isArray(req.query.attributeValueIds)
-          ? req.query.attributeValueIds
-          : [req.query.attributeValueIds]
+      const rawAttributeValueIds = req.query.attributeValueIds || (req.query as any)['attributeValueIds[]'];
+      const attributeValueIds = rawAttributeValueIds
+        ? Array.isArray(rawAttributeValueIds)
+          ? rawAttributeValueIds
+          : [rawAttributeValueIds]
         : undefined;
 
       const result = await service.getAllProducts({
