@@ -15,6 +15,7 @@ export const createNavigationSchema = z.object({
   isActive: z.boolean().default(true),
   isSystem: z.boolean().default(false),
   isMegaMenu: z.boolean().default(false),
+  megaMenu: z.any().optional(),
 });
 
 export const updateNavigationSchema = createNavigationSchema.partial();
