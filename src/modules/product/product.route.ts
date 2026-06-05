@@ -18,6 +18,7 @@ import {
   createCategorySchema,
   createProductSchema,
   createAttributeSchema,
+  updateAttributeSchema,
   createBrandSchema,
   deleteManyProductsSchema,
   deleteManyCategoriesSchema,
@@ -325,6 +326,7 @@ export const productRoutes = (fastify: FastifyInstance) => {
     method: 'put',
     disableValidator: true,
     swaggerSchema: {
+      body: ATTRIBUTE_DOCUMENTATION.ATTRIBUTE_REQUEST_BODIES.UPDATE_ATTRIBUTE,
       summary: ATTRIBUTE_DOCUMENTATION.ATTRIBUTE_SUMMARIES.UPDATE_ATTRIBUTE,
       description:
         ATTRIBUTE_DOCUMENTATION.ATTRIBUTE_DESCRIPTIONS.UPDATE_ATTRIBUTE,
@@ -332,6 +334,7 @@ export const productRoutes = (fastify: FastifyInstance) => {
     },
     preHandler: [authenticate],
     roles: [ROLE_NAME.ADMIN, ROLE_NAME.SUPER_ADMIN],
+    bodySchema: updateAttributeSchema,
     handler: controller.updateAttributeHandler,
   });
 

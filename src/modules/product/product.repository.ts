@@ -1005,7 +1005,12 @@ export class ProductRepository {
         }
       }
 
-      return updatedAttribute;
+      return await tx.query.attributes.findFirst({
+        where: eq(attributes.id, id),
+        with: {
+          values: true,
+        },
+      });
     });
   }
 
