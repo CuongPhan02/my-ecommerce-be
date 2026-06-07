@@ -56,8 +56,9 @@ export default function ResetPasswordEmail({
           theme: {
             extend: {
               colors: {
-                brand: '#f54900',
-                offwhite: '#f9f8f6',
+                brand: '#231f20',
+                accent: '#5c4e43',
+                offwhite: '#FBF8F3',
               },
               fontFamily: {
                 antonio: ['Antonio', 'Helvetica', 'Arial', 'sans-serif'],
@@ -68,32 +69,32 @@ export default function ResetPasswordEmail({
         }}
       >
         <Body className="bg-offwhite font-antonio m-0 py-10">
-          <Container className="bg-white border-t-4 border-solid border-brand shadow-xl mx-auto w-full max-w-[600px]">
+          <Container className="bg-white border-t-4 border-solid border-brand shadow-xl mx-auto" style={{ width: '600px', maxWidth: '100%' }}>
             {/* Header */}
             <Section className="pt-10 px-10 pb-5 text-center">
-              <Text className="text-brand font-playfair text-[32px] italic font-medium m-0">
-                <span className="not-italic font-bold">{companyName}</span>
+              <Text className="font-playfair text-[32px] font-bold text-[#231f20] tracking-[0.25em] m-0 text-center">
+                L U N É
               </Text>
-              <Text className="text-[#999999] text-[11px] tracking-[3px] mt-2.5 mb-0 uppercase">
+              <Text className="text-[#999999] text-[10px] tracking-[3px] mt-2.5 mb-0 uppercase">
                 The epitome of style
               </Text>
             </Section>
 
             {/* Content */}
             <Section className="py-[50px] px-[60px] text-center">
-              <Text className="text-brand font-playfair text-[20px] mb-6">
+              <Text className="text-accent font-playfair text-[18px] mb-6">
                 Hello{' '}
-                <span className="border-b border-solid border-[#cccccc] font-bold pb-0.5">
+                <span className="border-b border-solid border-[#cccccc] font-bold pb-0.5 text-[#231f20]">
                   {name}
                 </span>
                 ,
               </Text>
 
-              <Section className="text-[#666666] text-[16px] font-light leading-[1.6] mb-[30px]">
+              <Section className="text-[#666666] text-[14px] font-light leading-[1.6] mb-[30px]">
                 <Text className="mb-4">
                   You have requested a secure One-Time Password (OTP) for
                   authentication on{' '}
-                  <strong className="text-brand font-bold">
+                  <strong className="text-[#231f20] font-bold">
                     {companyName}
                   </strong>
                   .
@@ -108,7 +109,8 @@ export default function ResetPasswordEmail({
               <Section className="m-0">
                 <Link
                   href={resetPasswordUrl}
-                  className="bg-brand text-white inline-block font-playfair text-[15px] font-bold tracking-[2px] py-4 px-[45px] no-underline uppercase"
+                  className="bg-brand text-white inline-block font-playfair text-[14px] font-bold tracking-[2px] py-4 px-[45px] no-underline uppercase"
+                  style={{ backgroundColor: '#231f20' }}
                 >
                   Reset Password
                 </Link>
@@ -116,11 +118,12 @@ export default function ResetPasswordEmail({
 
               {/* Sub Link */}
               <Section className="pt-[25px]">
-                <Text className="text-[#888888] text-[14px] m-0">
+                <Text className="text-[#888888] text-[13px] m-0">
                   Forgot your password?
                   <Link
                     href={resetPasswordUrl}
-                    className="text-brand font-bold underline ml-1"
+                    className="text-accent font-bold underline ml-1"
+                    style={{ color: '#5c4e43' }}
                   >
                     Reset it here
                   </Link>
@@ -128,7 +131,7 @@ export default function ResetPasswordEmail({
               </Section>
 
               {/* Disclaimer */}
-              <Text className="border-t border-solid border-[#f4f4f4] text-[#aaaaaa] text-[12px] leading-[1.6] mt-[45px] mx-auto mb-0 max-w-[380px] pt-[25px]">
+              <Text className="border-t border-solid border-[#f4f4f4] text-[#aaaaaa] text-[11px] leading-[1.6] mt-[45px] mx-auto mb-0 max-w-[380px] pt-[25px]">
                 If you did not request this OTP, please disregard this message.
                 For your protection, we recommend updating your password
                 immediately.

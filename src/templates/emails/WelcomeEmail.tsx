@@ -58,8 +58,9 @@ export default function WelcomeEmail({
           theme: {
             extend: {
               colors: {
-                brand: '#f54900',
-                offwhite: '#f9f8f6',
+                brand: '#231f20',
+                accent: '#5c4e43',
+                offwhite: '#FBF8F3',
               },
               fontFamily: {
                 antonio: ['Antonio', 'Helvetica', 'Arial', 'sans-serif'],
@@ -70,21 +71,27 @@ export default function WelcomeEmail({
         }}
       >
         <Body className="bg-offwhite font-antonio m-0 py-10">
-          <Container className="bg-white border-t-4 border-solid border-brand shadow-xl mx-auto w-full max-w-[600px]">
+          <Container className="bg-white border-t-4 border-solid border-brand shadow-xl mx-auto" style={{ width: '600px', maxWidth: '100%' }}>
             {/* Header / Logo Section */}
             <Section className="pt-10 px-10 pb-5 text-center">
-              <Img
-                src={logoUrl}
-                alt="Logo"
-                width="80"
-                height="80"
-                className="rounded-full mx-auto mb-5 block"
-              />
-              <Text className="text-brand font-playfair text-[32px] italic font-medium m-0 mb-1">
+              {logoUrl && !logoUrl.includes('htnacim0q') ? (
+                <Img
+                  src={logoUrl}
+                  alt="Logo"
+                  width="80"
+                  height="80"
+                  className="rounded-full mx-auto mb-5 block"
+                />
+              ) : (
+                <Text className="font-playfair text-[32px] font-bold text-[#231f20] tracking-[0.25em] m-0 mb-5 text-center">
+                  L U N É
+                </Text>
+              )}
+              <Text className="text-accent font-playfair text-[24px] italic font-medium m-0 mb-1">
                 Welcome to{' '}
                 <span className="not-italic font-bold">Ecommerce Fashion</span>
               </Text>
-              <Text className="text-[#999999] text-[12px] tracking-[3px] m-0 uppercase">
+              <Text className="text-[#999999] text-[10px] tracking-[3px] m-0 uppercase mt-1">
                 The epitome of style
               </Text>
             </Section>
@@ -94,25 +101,27 @@ export default function WelcomeEmail({
               <Img
                 src="https://framerusercontent.com/images/KxF8H6qGSaJvRZEhALbixoOrQg.jpg?scale-down-to=2048&width=1920&height=2400"
                 alt="Fashion Model"
-                className="object-cover w-full max-w-[600px] h-[350px]"
+                width="600"
+                height="350"
+                className="object-cover w-full h-[350px]"
               />
             </Section>
 
             {/* Content Section */}
             <Section className="py-[50px] px-[60px] text-center">
-              <Text className="text-brand font-playfair text-[20px] mb-6">
+              <Text className="text-accent font-playfair text-[18px] mb-6">
                 Hello{' '}
-                <span className="border-b border-solid border-[#cccccc] font-bold pb-0.5">
+                <span className="border-b border-solid border-[#cccccc] font-bold pb-0.5 text-[#231f20]">
                   {name}
                 </span>
                 ,
               </Text>
 
-              <Section className="text-[#666666] text-[16px] font-light leading-[1.6]">
+              <Section className="text-[#666666] text-[14px] font-light leading-[1.6]">
                 <Text className="mb-4">
                   You have requested a secure One-Time Password (OTP) for
                   authentication on{' '}
-                  <strong className="text-brand font-bold">
+                  <strong className="text-[#231f20] font-bold">
                     {companyName}
                   </strong>
                   .
@@ -128,14 +137,15 @@ export default function WelcomeEmail({
               <Section className="mt-10 mb-[30px]">
                 <Link
                   href={verificationUrl}
-                  className="bg-brand text-white inline-block font-playfair text-[16px] font-bold tracking-[2px] py-[15px] px-10 no-underline uppercase"
+                  className="bg-brand text-white inline-block font-playfair text-[14px] font-bold tracking-[2px] py-[15px] px-10 no-underline uppercase"
+                  style={{ backgroundColor: '#231f20' }}
                 >
                   Verify Now
                 </Link>
               </Section>
 
               {/* Security Disclaimer */}
-              <Text className="text-[#aaaaaa] text-[12px] leading-[1.5] mt-[30px] mx-auto mb-0 max-w-[350px]">
+              <Text className="text-[#aaaaaa] text-[11px] leading-[1.5] mt-[30px] mx-auto mb-0 max-w-[350px]">
                 If you did not request this OTP, please disregard this message.
                 For your security, we recommend updating your password
                 immediately.
