@@ -48,6 +48,8 @@ export type HomepageSectionsSchemaType = z.infer<typeof homepageSectionsSchema>;
 export const storeInfoSchema = z.object({
   storeName: z.string().min(1).optional().nullable(),
   contactEmail: z.string().email().optional().nullable(),
+  name: z.string().min(1).optional().nullable(),
+  email: z.string().email().optional().nullable(),
   phone: z.string().optional().nullable(),
   address: z.string().optional().nullable(),
 });
@@ -72,6 +74,9 @@ export const seoMetaSchema = z.object({
   metaTitle: z.string().optional().nullable(),
   metaDescription: z.string().optional().nullable(),
   metaKeywords: z.string().optional().nullable(),
+  title: z.string().optional().nullable(),
+  description: z.string().optional().nullable(),
+  keywords: z.string().optional().nullable(),
   ogImage: z.string().optional().nullable(),
 });
 

@@ -63,18 +63,37 @@ export class SettingService {
 
   async getStoreInfo() {
     const setting = await this.repo.getSettingByKey(STORE_INFO_KEY);
-    return setting
-      ? setting.value
-      : {
-          storeName: null,
-          contactEmail: null,
-          phone: null,
-          address: null,
-        };
+    if (!setting) {
+      return {
+        name: null,
+        email: null,
+        phone: null,
+        address: null,
+        storeName: null,
+        contactEmail: null,
+      };
+    }
+    const val = (setting.value || {}) as any;
+    return {
+      name: val.name || val.storeName || null,
+      email: val.email || val.contactEmail || null,
+      phone: val.phone || null,
+      address: val.address || null,
+      storeName: val.storeName || val.name || null,
+      contactEmail: val.contactEmail || val.email || null,
+    };
   }
 
-  async upsertStoreInfo(data: StoreInfoSchemaType) {
-    return await this.repo.upsertSetting(STORE_INFO_KEY, data);
+  async upsertStoreInfo(data: any) {
+    const value = {
+      name: data.name || data.storeName || null,
+      email: data.email || data.contactEmail || null,
+      phone: data.phone || null,
+      address: data.address || null,
+      storeName: data.storeName || data.name || null,
+      contactEmail: data.contactEmail || data.email || null,
+    };
+    return await this.repo.upsertSetting(STORE_INFO_KEY, value);
   }
 
   // ─── Social Links ─────────────────────────────────────────────────────────
@@ -100,18 +119,40 @@ export class SettingService {
 
   async getSeoMeta() {
     const setting = await this.repo.getSettingByKey(SEO_META_KEY);
-    return setting
-      ? setting.value
-      : {
-          metaTitle: null,
-          metaDescription: null,
-          metaKeywords: null,
-          ogImage: null,
-        };
+    if (!setting) {
+      return {
+        title: null,
+        description: null,
+        keywords: null,
+        metaTitle: null,
+        metaDescription: null,
+        metaKeywords: null,
+        ogImage: null,
+      };
+    }
+    const val = (setting.value || {}) as any;
+    return {
+      title: val.title || val.metaTitle || null,
+      description: val.description || val.metaDescription || null,
+      keywords: val.keywords || val.metaKeywords || null,
+      metaTitle: val.metaTitle || val.title || null,
+      metaDescription: val.metaDescription || val.description || null,
+      metaKeywords: val.metaKeywords || val.keywords || null,
+      ogImage: val.ogImage || null,
+    };
   }
 
-  async upsertSeoMeta(data: SeoMetaSchemaType) {
-    return await this.repo.upsertSetting(SEO_META_KEY, data);
+  async upsertSeoMeta(data: any) {
+    const value = {
+      title: data.title || data.metaTitle || null,
+      description: data.description || data.metaDescription || null,
+      keywords: data.keywords || data.metaKeywords || null,
+      metaTitle: data.metaTitle || data.title || null,
+      metaDescription: data.metaDescription || data.description || null,
+      metaKeywords: data.metaKeywords || data.keywords || null,
+      ogImage: data.ogImage || null,
+    };
+    return await this.repo.upsertSetting(SEO_META_KEY, value);
   }
 
   // ─── System Config ────────────────────────────────────────────────────────
