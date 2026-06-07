@@ -5,7 +5,7 @@ const roleValues = userRoleEnum.enumValues;
 
 export const userQuerySchema = z.object({
   page: z.coerce.number().int().min(1).optional().default(1),
-  limit: z.coerce.number().int().min(1).max(100).optional().default(10),
+  limit: z.coerce.number().int().min(1).max(1000).optional().default(10),
   search: z.string().optional(),
   role: z.enum(roleValues).optional(),
   status: z.enum(['ACTIVE', 'INACTIVE']).optional(),
