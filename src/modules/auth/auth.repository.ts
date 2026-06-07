@@ -19,6 +19,11 @@ export class AuthRepository {
       where: eq(users.email, email),
     });
   }
+  async findUserByPhone(phone: string) {
+    return this.db.query.users.findFirst({
+      where: eq(users.phone, phone),
+    });
+  }
   async findUserById(id: string) {
     return this.db.query.users.findFirst({
       where: eq(users.id, id),
@@ -77,7 +82,7 @@ export class AuthRepository {
           email,
           name,
           password: hashedPassword,
-          phone,
+          phone: phone ? phone.trim() : null,
           emailVerified: data.emailVerified || false,
           verificationToken: createId(),
           verificationTokenExpires: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours

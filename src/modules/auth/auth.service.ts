@@ -30,6 +30,14 @@ export class AuthService {
       throw new ConflictError('Người dùng đã tồn tại');
     }
 
+    const phone = data.phone?.trim();
+    if (phone) {
+      const existingUserByPhone = await this.repo.findUserByPhone(phone);
+      if (existingUserByPhone) {
+        throw new ConflictError('Số điện thoại đã được sử dụng');
+      }
+    }
+
     const user = await this.repo.createUser(data);
 
     const redirectUrl = data.urlRedirect || ENV_CONFIG.URL_REDIRECT_FE;
