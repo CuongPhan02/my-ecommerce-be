@@ -42,7 +42,16 @@ const sendMail = async (
   sendSmtpEmail.to = [{ email: recipientEmail }];
   sendSmtpEmail.subject = customSubject;
   sendSmtpEmail.htmlContent = inlineHtml;
-  return apiInstance.sendTransacEmail(sendSmtpEmail);
+  try {
+    return await apiInstance.sendTransacEmail(sendSmtpEmail);
+  } catch (error: any) {
+    console.error('❌ Brevo sendMail Error:', {
+      message: error.message,
+      statusCode: error.statusCode,
+      body: error.body || error.response?.body || error.response?.text || error,
+    });
+    throw error;
+  }
 };
 
 export type EmailTemplateName = 'WelcomeEmail' | 'ResetPasswordEmail';
@@ -76,7 +85,16 @@ const sendReactMail = async (
   sendSmtpEmail.to = [{ email: recipientEmail }];
   sendSmtpEmail.subject = customSubject;
   sendSmtpEmail.htmlContent = inlineHtml;
-  return apiInstance.sendTransacEmail(sendSmtpEmail);
+  try {
+    return await apiInstance.sendTransacEmail(sendSmtpEmail);
+  } catch (error: any) {
+    console.error('❌ Brevo sendReactMail Error:', {
+      message: error.message,
+      statusCode: error.statusCode,
+      body: error.body || error.response?.body || error.response?.text || error,
+    });
+    throw error;
+  }
 };
 
 export const BrevoProvider = {
