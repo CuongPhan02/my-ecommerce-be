@@ -8,16 +8,20 @@ export class DashboardService {
   }
 
   async getDashboardData() {
-    const [stats, revenueOverview, recentSales] = await Promise.all([
+    const [stats, revenueOverview, recentSales, salesByCategory, notifications] = await Promise.all([
       this.repo.getStats(),
       this.repo.getRevenueOverview(),
       this.repo.getRecentSales(),
+      this.repo.getSalesByCategory(),
+      this.repo.getNotifications(),
     ]);
 
     return {
       stats,
       revenueOverview,
       recentSales,
+      salesByCategory,
+      notifications,
     };
   }
 }
