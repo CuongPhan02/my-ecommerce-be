@@ -25,7 +25,7 @@ export const orderRoutes = (fastify: FastifyInstance) => {
       querystring: ORDER_PAGINATION_QUERYSTRING,
     },
     preHandler: [authenticate],
-    roles: [ROLE_NAME.ADMIN, ROLE_NAME.SUPER_ADMIN],
+    roles: [ROLE_NAME.ADMIN, ROLE_NAME.SUPER_ADMIN, ROLE_NAME.SALES, ROLE_NAME.STAFF, ROLE_NAME.VENDOR],
     handler: controller.getAllOrdersHandler,
   });
 
@@ -40,7 +40,7 @@ export const orderRoutes = (fastify: FastifyInstance) => {
       tags: [ORDER_TAG],
     },
     preHandler: [authenticate],
-    roles: [ROLE_NAME.ADMIN, ROLE_NAME.SUPER_ADMIN],
+    roles: [ROLE_NAME.ADMIN, ROLE_NAME.SUPER_ADMIN, ROLE_NAME.SALES, ROLE_NAME.STAFF, ROLE_NAME.VENDOR],
     handler: controller.getOrderByIdHandler,
   });
 
@@ -56,7 +56,7 @@ export const orderRoutes = (fastify: FastifyInstance) => {
       tags: [ORDER_TAG],
     },
     preHandler: [authenticate],
-    roles: [ROLE_NAME.ADMIN, ROLE_NAME.SUPER_ADMIN],
+    roles: [ROLE_NAME.ADMIN, ROLE_NAME.SUPER_ADMIN, ROLE_NAME.SALES, ROLE_NAME.STAFF, ROLE_NAME.VENDOR],
     bodySchema: updateOrderSchema,
     handler: controller.updateOrderHandler,
   });

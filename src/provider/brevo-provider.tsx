@@ -11,6 +11,7 @@ import { render } from '@react-email/render';
 import { ENV_CONFIG } from '@/config/env';
 import WelcomeEmail from '@/templates/emails/WelcomeEmail';
 import ResetPasswordEmail from '@/templates/emails/ResetPasswordEmail';
+import VolunteerEmail from '@/templates/emails/VolunteerEmail';
 
 let apiInstance = new TransactionalEmailsApi();
 
@@ -54,7 +55,7 @@ const sendMail = async (
   }
 };
 
-export type EmailTemplateName = 'WelcomeEmail' | 'ResetPasswordEmail';
+export type EmailTemplateName = 'WelcomeEmail' | 'ResetPasswordEmail' | 'VolunteerEmail';
 
 const sendReactMail = async (
   recipientEmail: string,
@@ -70,6 +71,9 @@ const sendReactMail = async (
       break;
     case 'ResetPasswordEmail':
       emailComponent = <ResetPasswordEmail {...props} />;
+      break;
+    case 'VolunteerEmail':
+      emailComponent = <VolunteerEmail {...props} />;
       break;
     default:
       throw new Error(`Invalid email template: ${templateName}`);
