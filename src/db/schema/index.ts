@@ -8,3 +8,4 @@ export * from './inventory';
 export * from './reviews';
 export * from '../_helpers';
 export * from './vouchers';
+export * from './volunteers';
