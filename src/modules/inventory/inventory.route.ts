@@ -7,6 +7,7 @@ import {
   importStockSchema,
   adjustStockSchema,
   inventoryHistoryQuerySchema,
+  exportStockSchema,
 } from './inventory.validate';
 import { INVENTORY_TAG, INVENTORY_DOCUMENTATION } from './inventory.docs';
 
@@ -58,6 +59,21 @@ export async function inventoryRoutes(fastify: FastifyInstance) {
     },
     bodySchema: adjustStockSchema,
     handler: controller.adjustStockHandler,
+  });
+
+  // POST /api/inventory/export - Create stock export voucher (Admin/Inventory only)
+  routeWithZod(fastify, {
+    method: 'post',
+    url: '/export',
+    preHandler: [authenticate, authorize(['ADMIN', 'SUPER_ADMIN', 'INVENTORY'])],
+    disableValidator: true,
+    swaggerSchema: {
+      tags: [INVENTORY_TAG],
+      summary: 'Xuất kho bán hàng',
+      description: 'Ghi nhận giao dịch xuất kho và giảm số lượng tồn kho',
+    },
+    bodySchema: exportStockSchema,
+    handler: controller.exportStockHandler,
   });
 
   // GET /api/inventory/transactions - Get inventory transactions log (Admin/Inventory only)

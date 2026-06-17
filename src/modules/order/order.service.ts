@@ -1,6 +1,8 @@
 import { NotFoundError, BadRequestError } from '@/utils/errors';
 import { OrderRepository } from './order.repository';
 import { GetOrdersQuery, UpdateOrderInput, CreateOrderInput } from './order.validate';
+import { BrevoProvider } from '@/provider/brevo-provider';
+import { formatVND } from '@/utils/lib';
 
 export class OrderService {
   private repo: OrderRepository;
@@ -141,15 +143,30 @@ export class OrderService {
 
     if (data.couponCode) {
       const coupon = await this.repo.findCouponByCode(data.couponCode);
-      if (!coupon || !coupon.isActive || new Date(coupon.expiresAt) < new Date()) {
-        throw new BadRequestError('Mã giảm giá không hợp lệ hoặc đã hết hạn sử dụng');
+      if (!coupon || !coupon.isActive) {
+        throw new BadRequestError('Mã giảm giá không hợp lệ hoặc đã bị tạm dừng');
+      }
+
+      // Check expiration (vouchers table uses `expirationDate`)
+      if (coupon.expirationDate && new Date(coupon.expirationDate) < new Date()) {
+        throw new BadRequestError('Mã giảm giá đã hết hạn sử dụng');
+      }
+
+      // Check minimum order value
+      if (coupon.minOrderValue && subtotal < coupon.minOrderValue) {
+        throw new BadRequestError(`Đơn hàng tối thiểu ${coupon.minOrderValue.toLocaleString('vi-VN')}đ để sử dụng mã này`);
+      }
+
+      // Check usage limit
+      if (coupon.usageLimit && (coupon.usedCount ?? 0) >= coupon.usageLimit) {
+        throw new BadRequestError('Mã giảm giá đã hết lượt sử dụng');
       }
 
       couponId = coupon.id;
-      if (coupon.discountType === 'PERCENTAGE') {
-        discountAmount = subtotal * (coupon.value / 100);
-      } else if (coupon.discountType === 'FIXED') {
-        discountAmount = coupon.value;
+      if (coupon.type === 'PERCENTAGE') {
+        discountAmount = subtotal * (coupon.discountValue / 100);
+      } else if (coupon.type === 'FIXED') {
+        discountAmount = coupon.discountValue;
       }
 
       // Số tiền giảm tối đa không vượt quá giá trị giỏ hàng
@@ -170,6 +187,39 @@ export class OrderService {
       items: orderItemsData,
       cartId: cart.id,
     });
+
+    // 6. Gửi email xác nhận đơn hàng
+    try {
+      const emailItems = cart.items.map((item: any) => ({
+        name: item.productVariant?.product?.name || `Sản phẩm ${item.productVariant?.sku}`,
+        quantity: item.quantity,
+        price: formatVND(item.productVariant?.price || 0)
+      }));
+
+      const recipientEmail = data.shippingEmail || (await this.repo.getUserEmail(userId));
+      
+      if (recipientEmail) {
+        console.log(`[EMAIL] Đang gửi email xác nhận đơn hàng tới: ${recipientEmail}`);
+        await BrevoProvider.sendReactMail(
+          recipientEmail,
+          `Xác nhận đơn hàng #${newOrder.id.slice(-8).toUpperCase()}`,
+          'OrderConfirmationEmail',
+          {
+            orderId: newOrder.id.slice(-8).toUpperCase(),
+            name: data.shippingName,
+            totalAmount: formatVND(totalAmount),
+            shippingAddress: `${data.street}, ${data.city}, ${data.province}`,
+            items: emailItems,
+          }
+        );
+        console.log(`[EMAIL] Đã gửi email xác nhận đơn hàng tới: ${recipientEmail} thành công!`);
+      } else {
+        console.log(`[EMAIL] Không có email người nhận để gửi xác nhận đơn hàng.`);
+      }
+    } catch (error) {
+      console.error('❌ Lỗi khi gửi email xác nhận đơn hàng:', error);
+      // Không chặn luồng tạo đơn hàng
+    }
 
     return newOrder;
   }

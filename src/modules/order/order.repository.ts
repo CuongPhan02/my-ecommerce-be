@@ -1,5 +1,6 @@
 import { and, asc, desc, eq, ilike, or } from 'drizzle-orm';
-import { orders, orderItems, payments, carts, cartItems, coupons } from '@/db/schema/orders';
+import { orders, orderItems, payments, carts, cartItems, coupons, refundRequests } from '@/db/schema/orders';
+import { vouchers } from '@/db/schema/vouchers';
 import { users, addresses } from '@/db/schema/users';
 import { products, productVariants } from '@/db/schema/products';
 import { media } from '@/db/schema/media';
@@ -152,11 +153,18 @@ export class OrderRepository {
           transactionId: payments.transactionId,
           createdAt: payments.createdAt,
         },
+        refundRequest: {
+          id: refundRequests.id,
+          status: refundRequests.status,
+          reason: refundRequests.reason,
+          rejectReason: refundRequests.rejectReason,
+        },
       })
       .from(orders)
       .leftJoin(users, eq(orders.userId, users.id))
       .leftJoin(addresses, eq(orders.shippingAddressId, addresses.id))
       .leftJoin(payments, eq(payments.orderId, orders.id))
+      .leftJoin(refundRequests, eq(refundRequests.orderId, orders.id))
       .where(eq(orders.id, id));
 
     if (!order) return null;
@@ -256,9 +264,16 @@ export class OrderRepository {
           status: payments.status,
           amount: payments.amount,
         },
+        refundRequest: {
+          id: refundRequests.id,
+          status: refundRequests.status,
+          reason: refundRequests.reason,
+          rejectReason: refundRequests.rejectReason,
+        },
       })
       .from(orders)
       .leftJoin(payments, eq(payments.orderId, orders.id))
+      .leftJoin(refundRequests, eq(refundRequests.orderId, orders.id))
       .where(eq(orders.userId, userId))
       .orderBy(desc(orders.createdAt))
       .limit(limit)
@@ -299,17 +314,21 @@ export class OrderRepository {
       with: {
         items: {
           with: {
-            productVariant: true,
+            productVariant: {
+              with: {
+                product: true,
+              },
+            },
           },
         },
       },
     });
   }
 
-  // ======= TÌM KIẾM COUPON THEO MÃ =======
+  // ======= TÌM KIẾM VOUCHER THEO MÃ =======
   async findCouponByCode(code: string) {
-    return this.db.query.coupons.findFirst({
-      where: eq(coupons.code, code),
+    return this.db.query.vouchers.findFirst({
+      where: eq(vouchers.code, code),
     });
   }
 
@@ -318,6 +337,15 @@ export class OrderRepository {
     return this.db.query.addresses.findFirst({
       where: and(eq(addresses.id, id), eq(addresses.userId, userId)),
     });
+  }
+
+  // ======= LẤY EMAIL NGƯỜI DÙNG =======
+  async getUserEmail(userId: string) {
+    const user = await this.db.query.users.findFirst({
+      where: eq(users.id, userId),
+      columns: { email: true }
+    });
+    return user?.email;
   }
 
   // ======= THỰC THI GIAO DỊCH TẠO ĐƠN HÀNG =======
@@ -390,7 +418,7 @@ export class OrderRepository {
           userId: data.userId,
           totalAmount: data.totalAmount,
           discountAmount: data.discountAmount,
-          couponId: data.couponId,
+          couponId: null, // voucher ID is not compatible with coupon FK, discount is tracked via discountAmount
           shippingAddressId: finalAddressId,
           status: 'PENDING',
         })
