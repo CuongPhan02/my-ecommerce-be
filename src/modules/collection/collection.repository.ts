@@ -96,11 +96,29 @@ export class CollectionRepository {
   }
 
   async updateCollection(id: string, data: UpdateCollectionInput) {
+    const { productIds, ...updateData } = data;
+    
     const [updated] = await this.db
       .update(collections)
-      .set(data)
+      .set({ ...updateData, updatedAt: new Date() })
       .where(eq(collections.id, id))
       .returning();
+
+    if (productIds !== undefined) {
+      await this.db.delete(productsToCollections).where(eq(productsToCollections.collectionId, id));
+      if (productIds.length > 0) {
+        await this.db
+          .insert(productsToCollections)
+          .values(
+            productIds.map((productId) => ({
+              collectionId: id,
+              productId,
+            }))
+          )
+          .onConflictDoNothing();
+      }
+    }
+
     return updated;
   }
 
