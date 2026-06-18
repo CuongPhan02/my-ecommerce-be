@@ -47,6 +47,7 @@ const envSchema = z.object({
   BREVO_API_KEY: z.string().min(1, 'BREVO_API_KEY là bắt buộc'),
   ADMIN_EMAIL_ADDRESS: z.string().email('Địa chỉ email admin không hợp lệ'),
   ADMIN_EMAIL_NAME: z.string().min(1, 'Tên email admin là bắt buộc'),
+  GEMINI_API_KEY: z.string().min(1, 'GEMINI_API_KEY là bắt buộc'),
 
   // --- Security ---
   COOKIE_SECRET: z.string().min(1, 'COOKIE_SECRET là bắt buộc'),
