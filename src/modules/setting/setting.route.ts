@@ -255,4 +255,40 @@ export const settingRoutes = (fastify: FastifyInstance) => {
     bodySchema: systemConfigSchema,
     handler: controller.upsertSystemConfigHandler,
   });
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // SHIPPING CONFIG (Cấu hình Vận chuyển)
+  // ─────────────────────────────────────────────────────────────────────────
+
+  // GET /api/settings/shipping_config
+  routeWithZod(fastify, {
+    url: '/shipping_config',
+    method: 'get',
+    disableValidator: true,
+    swaggerSchema: {
+      summary: 'Lấy cấu hình vận chuyển',
+      description: 'Dành cho Admin và Frontend lấy trạng thái bật/tắt vận chuyển',
+      tags: [SETTING_DOCUMENTATION.SETTING],
+    },
+    handler: controller.getShippingConfigHandler,
+  });
+
+  // POST /api/settings/shipping_config
+  routeWithZod(fastify, {
+    url: '/shipping_config',
+    method: 'post',
+    disableValidator: true,
+    swaggerSchema: {
+      summary: 'Cập nhật cấu hình vận chuyển',
+      description: 'Dành cho Admin cập nhật cấu hình vận chuyển',
+      tags: [SETTING_DOCUMENTATION.SETTING],
+      body: {
+        type: 'object',
+        properties: { enableShipping: { type: 'boolean' } }
+      },
+    },
+    preHandler: [authenticate],
+    roles: [ROLE_NAME.ADMIN, ROLE_NAME.SUPER_ADMIN],
+    handler: controller.upsertShippingConfigHandler,
+  });
 };

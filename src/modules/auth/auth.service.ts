@@ -256,7 +256,7 @@ export class AuthService {
     const findRefreshToken = await this.repo.findRefreshToken(refreshToken);
 
     if (!findRefreshToken) {
-      throw new NotFoundError('Không tìm thấy token refresh');
+      return { message: 'Đăng xuất thành công (token không tồn tại)' };
     }
 
     await this.repo.deleteRefreshToken(refreshToken);

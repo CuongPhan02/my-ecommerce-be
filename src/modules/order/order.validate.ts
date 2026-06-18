@@ -49,6 +49,7 @@ export const createOrderSchema = z.object({
   province: z.string().min(1, 'Tỉnh / Thành phố là bắt buộc'),
   city: z.string().min(1, 'Quận / Huyện là bắt buộc'),
   note: z.string().optional(),
+  shippingMethodId: z.string().optional(),
 });
 
 export type GetOrdersQuery = z.infer<typeof getOrdersQuerySchema>;

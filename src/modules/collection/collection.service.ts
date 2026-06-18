@@ -56,6 +56,21 @@ export class CollectionService {
 
   async updateCollection(id: string, data: UpdateCollectionInput) {
     await this.getCollectionById(id); // Ensure exists
+
+    if (data.slug) {
+      const existSlug = await this.repo.findBySlug(data.slug);
+      if (existSlug && existSlug.id !== id) {
+        throw new ConflictError('Đường dẫn bộ sưu tập đã tồn tại');
+      }
+    }
+
+    if (data.name) {
+      const existName = await this.repo.findByName(data.name);
+      if (existName && existName.id !== id) {
+        throw new ConflictError('Tên bộ sưu tập đã tồn tại');
+      }
+    }
+
     return this.repo.updateCollection(id, data);
   }
 

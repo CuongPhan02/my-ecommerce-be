@@ -8,12 +8,13 @@ export class DashboardService {
   }
 
   async getDashboardData() {
-    const [stats, revenueOverview, recentSales, salesByCategory, notifications] = await Promise.all([
+    const [stats, revenueOverview, recentSales, salesByCategory, notifications, trafficData] = await Promise.all([
       this.repo.getStats(),
       this.repo.getRevenueOverview(),
       this.repo.getRecentSales(),
       this.repo.getSalesByCategory(),
       this.repo.getNotifications(),
+      this.repo.getTrafficData(),
     ]);
 
     return {
@@ -22,6 +23,7 @@ export class DashboardService {
       recentSales,
       salesByCategory,
       notifications,
+      trafficData,
     };
   }
 }

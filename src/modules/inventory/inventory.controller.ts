@@ -7,6 +7,7 @@ import {
   ImportStockType,
   AdjustStockType,
   InventoryHistoryQueryType,
+  ExportStockType,
 } from './inventory.validate';
 
 export const inventoryController = (fastify: FastifyInstance) => {
@@ -41,6 +42,16 @@ export const inventoryController = (fastify: FastifyInstance) => {
       const data = request.body;
       const result = await service.adjustStock(userId, data);
       return sendResponseSuccess(200, reply, 'Cân đối kho hàng thành công', result);
+    },
+
+    exportStockHandler: async (
+      request: FastifyRequest<{ Body: ExportStockType }>,
+      reply: FastifyReply
+    ) => {
+      const userId = (request as any).user?.id;
+      const data = request.body;
+      const result = await service.exportStock(userId, data);
+      return sendResponseSuccess(201, reply, 'Xuất kho thành công', result);
     },
 
     getTransactionsHandler: async (

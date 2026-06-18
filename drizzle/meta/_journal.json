@@ -15,6 +15,13 @@
       "when": 1773039394875,
       "tag": "0001_spicy_next_avengers",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1781723074433,
+      "tag": "0002_fuzzy_starhawk",
+      "breakpoints": true
     }
   ]
 }

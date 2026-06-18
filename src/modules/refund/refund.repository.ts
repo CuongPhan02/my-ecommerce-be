@@ -1,5 +1,5 @@
-import { eq, desc, asc, ilike, or, and, count } from 'drizzle-orm';
-import { refundRequests, orders, users } from '@/db/schema';
+import { eq, desc, asc, ilike, or, and, count, sql } from 'drizzle-orm';
+import { refundRequests, orders, users, payments, orderItems, productVariants } from '@/db/schema';
 import { RefundQueryType } from './refund.validate';
 import { formatVND } from '@/utils/lib';
 
@@ -149,27 +149,66 @@ export class RefundRepository {
   }
 
   async approveRefund(id: string, refundMethod: string, internalNote?: string) {
-    const [updatedRefund] = await this.db
-      .update(refundRequests)
-      .set({
-        status: 'APPROVED',
-        refundMethod,
-        internalNote,
-      })
-      .where(eq(refundRequests.id, id))
-      .returning();
-    return updatedRefund;
+    return this.db.transaction(async (tx: any) => {
+      // 1. Cập nhật refundRequests
+      const [updatedRefund] = await tx
+        .update(refundRequests)
+        .set({
+          status: 'APPROVED',
+          refundMethod,
+          internalNote,
+        })
+        .where(eq(refundRequests.id, id))
+        .returning();
+
+      if (!updatedRefund) throw new Error('Không tìm thấy yêu cầu hoàn trả');
+
+      const orderId = updatedRefund.orderId;
+
+      // 2. Cập nhật trạng thái đơn hàng
+      await tx
+        .update(orders)
+        .set({ status: 'RETURNED' })
+        .where(eq(orders.id, orderId));
+
+      // 3. Cập nhật trạng thái thanh toán
+      await tx
+        .update(payments)
+        .set({ status: 'REFUNDED' })
+        .where(eq(payments.orderId, orderId));
+
+      // 4. Lấy danh sách sản phẩm trong đơn để hoàn lại kho
+      const items = await tx
+        .select()
+        .from(orderItems)
+        .where(eq(orderItems.orderId, orderId));
+
+      // 5. Trả lại số lượng tồn kho (restock)
+      for (const item of items) {
+        await tx
+          .update(productVariants)
+          .set({
+            stockQuantity: sql`${productVariants.stockQuantity} + ${item.quantity}`,
+          })
+          .where(eq(productVariants.id, item.productVariantId));
+      }
+
+      return updatedRefund;
+    });
   }
 
   async rejectRefund(id: string, rejectReason: string) {
-    const [updatedRefund] = await this.db
-      .update(refundRequests)
-      .set({
-        status: 'REJECTED',
-        rejectReason,
-      })
-      .where(eq(refundRequests.id, id))
-      .returning();
-    return updatedRefund;
+    return this.db.transaction(async (tx: any) => {
+      const [updatedRefund] = await tx
+        .update(refundRequests)
+        .set({
+          status: 'REJECTED',
+          rejectReason,
+        })
+        .where(eq(refundRequests.id, id))
+        .returning();
+
+      return updatedRefund;
+    });
   }
 }

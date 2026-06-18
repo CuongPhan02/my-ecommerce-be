@@ -42,3 +42,13 @@ export const inventoryParamSchema = z.object({
 });
 
 export type InventoryParamType = z.infer<typeof inventoryParamSchema>;
+
+export const exportStockSchema = z.object({
+  items: z.array(z.object({
+    productVariantId: z.string().min(1, 'ID biến thể sản phẩm là bắt buộc'),
+    quantity: z.number().int().positive('Số lượng xuất phải lớn hơn 0'),
+  })).min(1, 'Cần chọn ít nhất 1 sản phẩm để xuất'),
+  reason: z.string().optional().default('Xuất kho bán hàng'),
+});
+
+export type ExportStockType = z.infer<typeof exportStockSchema>;

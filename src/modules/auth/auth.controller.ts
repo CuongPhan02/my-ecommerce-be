@@ -111,7 +111,8 @@ export const authController = (fastify: FastifyInstance) => {
         req.body?.refreshToken || (req.cookies[COOKIE_NAME] as string);
 
       if (!refreshToken) {
-        throw new BadRequestError('Thiếu refresh token');
+        reply.clearCookie(COOKIE_NAME, { path: '/' });
+        return sendResponseSuccess(200, reply, 'Đã đăng xuất (không có token)', { message: 'Đã đăng xuất' });
       }
 
       const result = await service.logout(refreshToken);

@@ -6,7 +6,7 @@ export const createCollectionSchema = createInsertSchema(collections).extend({
   name: z.string().min(2, 'Collection name must be at least 2 characters'),
   slug: z.string().min(2, 'Slug must be at least 2 characters'),
   description: z.string().optional().nullable(),
-  imageUrl: z.url('Invalid image URL').optional().nullable(),
+  imageUrl: z.union([z.literal(''), z.string().url('Invalid image URL')]).optional().nullable(),
   isActive: z.boolean().default(true),
   isHomeActive: z.boolean().default(false),
 });
@@ -18,9 +18,10 @@ export const updateCollectionSchema = createInsertSchema(collections).extend({
     .optional(),
   slug: z.string().min(2, 'Slug must be at least 2 characters').optional(),
   description: z.string().optional().nullable(),
-  imageUrl: z.url('Invalid image URL').optional().nullable(),
+  imageUrl: z.union([z.literal(''), z.string().url('Invalid image URL')]).optional().nullable(),
   isActive: z.boolean().optional(),
   isHomeActive: z.boolean().optional(),
+  productIds: z.array(z.string()).optional(),
 });
 
 export const deleteCollectionSchema = z.object({
