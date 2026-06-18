@@ -2,12 +2,14 @@ import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { PaymentRepository } from './payment.repository';
 import { PaymentService } from './payment.service';
 import { CreatePaymentUrlInput } from './payment.validate';
+import { OrderRepository } from '../order/order.repository';
 import { sendResponseSuccess } from '@/utils/sendResponse';
 import { ENV_CONFIG } from '@/config/env';
 
 export const paymentController = (fastify: FastifyInstance) => {
   const repo = new PaymentRepository(fastify.db);
-  const service = new PaymentService(repo);
+  const orderRepo = new OrderRepository(fastify.db);
+  const service = new PaymentService(repo, orderRepo);
 
   return {
     createPaymentUrlHandler: async (

@@ -3,12 +3,16 @@ import { ENV_CONFIG } from '@/config/env';
 import { NotFoundError, BadRequestError } from '@/utils/errors';
 import { PaymentRepository } from './payment.repository';
 import { CreatePaymentUrlInput } from './payment.validate';
+import { OrderRepository } from '@/modules/order/order.repository';
+import { BrevoProvider } from '@/provider/brevo-provider';
 
 export class PaymentService {
   private repo: PaymentRepository;
+  private orderRepo: OrderRepository;
 
-  constructor(repo: PaymentRepository) {
+  constructor(repo: PaymentRepository, orderRepo: OrderRepository) {
     this.repo = repo;
+    this.orderRepo = orderRepo;
   }
 
   /**
@@ -139,9 +143,39 @@ export class PaymentService {
         if (isSuccess) {
           await this.repo.updatePaymentStatus(orderId, 'COMPLETED', vnpTransactionNo);
           await this.repo.updateOrderStatus(orderId, 'PROCESSING');
+
+          // Gửi mail thanh toán thành công
+          try {
+            const fullOrder = await this.orderRepo.getOrderById(orderId);
+            if (fullOrder && fullOrder.customer && fullOrder.customer.email) {
+              await BrevoProvider.sendReactMail(
+                fullOrder.customer.email,
+                `Thanh toán thành công đơn hàng #${fullOrder.id}`,
+                'PaymentSuccessEmail',
+                { order: fullOrder }
+              );
+            }
+          } catch (error) {
+            console.error(`❌ Gửi email thanh toán thành công lỗi (Order #${orderId}):`, error);
+          }
         } else {
           await this.repo.updatePaymentStatus(orderId, 'FAILED', vnpTransactionNo);
           await this.repo.updateOrderStatus(orderId, 'CANCELLED');
+
+          // Gửi mail thanh toán thất bại
+          try {
+            const fullOrder = await this.orderRepo.getOrderById(orderId);
+            if (fullOrder && fullOrder.customer && fullOrder.customer.email) {
+              await BrevoProvider.sendReactMail(
+                fullOrder.customer.email,
+                `Thanh toán thất bại cho đơn hàng #${fullOrder.id}`,
+                'PaymentFailedEmail',
+                { order: fullOrder }
+              );
+            }
+          } catch (error) {
+            console.error(`❌ Gửi email thanh toán thất bại lỗi (Order #${orderId}):`, error);
+          }
         }
       }
     }
@@ -212,9 +246,39 @@ export class PaymentService {
     if (responseCode === '00' && transactionStatus === '00') {
       await this.repo.updatePaymentStatus(orderId, 'COMPLETED', vnpTransactionNo);
       await this.repo.updateOrderStatus(orderId, 'PROCESSING');
+
+      // Gửi mail thanh toán thành công
+      try {
+        const fullOrder = await this.orderRepo.getOrderById(orderId);
+        if (fullOrder && fullOrder.customer && fullOrder.customer.email) {
+          await BrevoProvider.sendReactMail(
+            fullOrder.customer.email,
+            `Thanh toán thành công đơn hàng #${fullOrder.id}`,
+            'PaymentSuccessEmail',
+            { order: fullOrder }
+          );
+        }
+      } catch (error) {
+        console.error(`❌ Gửi email thanh toán thành công lỗi (IPN, Order #${orderId}):`, error);
+      }
     } else {
       await this.repo.updatePaymentStatus(orderId, 'FAILED', vnpTransactionNo);
       await this.repo.updateOrderStatus(orderId, 'CANCELLED');
+
+      // Gửi mail thanh toán thất bại
+      try {
+        const fullOrder = await this.orderRepo.getOrderById(orderId);
+        if (fullOrder && fullOrder.customer && fullOrder.customer.email) {
+          await BrevoProvider.sendReactMail(
+            fullOrder.customer.email,
+            `Thanh toán thất bại cho đơn hàng #${fullOrder.id}`,
+            'PaymentFailedEmail',
+            { order: fullOrder }
+          );
+        }
+      } catch (error) {
+        console.error(`❌ Gửi email thanh toán thất bại lỗi (IPN, Order #${orderId}):`, error);
+      }
     }
 
     return { RspCode: '00', Message: 'Xác nhận thành công' };

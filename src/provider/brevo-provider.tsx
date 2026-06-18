@@ -12,6 +12,11 @@ import { ENV_CONFIG } from '@/config/env';
 import WelcomeEmail from '@/templates/emails/WelcomeEmail';
 import ResetPasswordEmail from '@/templates/emails/ResetPasswordEmail';
 import VolunteerEmail from '@/templates/emails/VolunteerEmail';
+import OrderCreatedEmail from '@/templates/emails/OrderCreatedEmail';
+import PaymentSuccessEmail from '@/templates/emails/PaymentSuccessEmail';
+import PaymentFailedEmail from '@/templates/emails/PaymentFailedEmail';
+import RefundStatusEmail from '@/templates/emails/RefundStatusEmail';
+import OrderStatusEmail from '@/templates/emails/OrderStatusEmail';
 
 let apiInstance = new TransactionalEmailsApi();
 
@@ -55,7 +60,15 @@ const sendMail = async (
   }
 };
 
-export type EmailTemplateName = 'WelcomeEmail' | 'ResetPasswordEmail' | 'VolunteerEmail';
+export type EmailTemplateName =
+  | 'WelcomeEmail'
+  | 'ResetPasswordEmail'
+  | 'VolunteerEmail'
+  | 'OrderCreatedEmail'
+  | 'PaymentSuccessEmail'
+  | 'PaymentFailedEmail'
+  | 'RefundStatusEmail'
+  | 'OrderStatusEmail';
 
 const sendReactMail = async (
   recipientEmail: string,
@@ -74,6 +87,21 @@ const sendReactMail = async (
       break;
     case 'VolunteerEmail':
       emailComponent = <VolunteerEmail {...props} />;
+      break;
+    case 'OrderCreatedEmail':
+      emailComponent = <OrderCreatedEmail {...props} />;
+      break;
+    case 'PaymentSuccessEmail':
+      emailComponent = <PaymentSuccessEmail {...props} />;
+      break;
+    case 'PaymentFailedEmail':
+      emailComponent = <PaymentFailedEmail {...props} />;
+      break;
+    case 'RefundStatusEmail':
+      emailComponent = <RefundStatusEmail {...props} />;
+      break;
+    case 'OrderStatusEmail':
+      emailComponent = <OrderStatusEmail {...props} />;
       break;
     default:
       throw new Error(`Invalid email template: ${templateName}`);

@@ -1,6 +1,7 @@
 import { NotFoundError, BadRequestError } from '@/utils/errors';
 import { OrderRepository } from './order.repository';
 import { GetOrdersQuery, UpdateOrderInput, CreateOrderInput } from './order.validate';
+import { BrevoProvider } from '@/provider/brevo-provider';
 
 export class OrderService {
   private repo: OrderRepository;
@@ -33,8 +34,35 @@ export class OrderService {
   // ======= ADMIN: Cập nhật trạng thái đơn hàng =======
   async updateOrder(id: string, data: UpdateOrderInput) {
     // Kiểm tra đơn hàng tồn tại
-    await this.getOrderById(id);
-    return this.repo.updateOrder(id, data);
+    const oldOrder = await this.getOrderById(id);
+    const updatedOrder = await this.repo.updateOrder(id, data);
+
+    // Gửi email khi trạng thái đơn hàng thay đổi
+    if (data.status && data.status !== oldOrder.status) {
+      try {
+        if (updatedOrder && updatedOrder.customer && updatedOrder.customer.email) {
+          let subject = `Cập nhật trạng thái đơn hàng #${updatedOrder.id}`;
+          if (data.status === 'SHIPPED') {
+            subject = `Đơn hàng #${updatedOrder.id} đã được gửi đi`;
+          } else if (data.status === 'DELIVERED') {
+            subject = `Giao hàng thành công đơn hàng #${updatedOrder.id}`;
+          } else if (data.status === 'CANCELLED') {
+            subject = `Đơn hàng #${updatedOrder.id} đã bị hủy`;
+          }
+
+          await BrevoProvider.sendReactMail(
+            updatedOrder.customer.email,
+            subject,
+            'OrderStatusEmail',
+            { order: updatedOrder }
+          );
+        }
+      } catch (error) {
+        console.error(`❌ Gửi email cập nhật trạng thái lỗi (Order #${id}):`, error);
+      }
+    }
+
+    return updatedOrder;
   }
 
   // ======= USER: Lấy đơn hàng của tôi =======
@@ -170,6 +198,21 @@ export class OrderService {
       items: orderItemsData,
       cartId: cart.id,
     });
+
+    // 6. Gửi email xác nhận đặt hàng thành công
+    try {
+      const fullOrder = await this.repo.getOrderById(newOrder.id);
+      if (fullOrder && fullOrder.customer && fullOrder.customer.email) {
+        await BrevoProvider.sendReactMail(
+          fullOrder.customer.email,
+          `Xác nhận đặt hàng thành công cho đơn hàng #${fullOrder.id}`,
+          'OrderCreatedEmail',
+          { order: fullOrder }
+        );
+      }
+    } catch (error) {
+      console.error(`❌ Gửi email đặt hàng thành công lỗi (Order #${newOrder.id}):`, error);
+    }
 
     return newOrder;
   }
