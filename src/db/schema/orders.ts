@@ -51,6 +51,8 @@ export const orders = pgTable('order', {
   shippingAddressId: text('shipping_address_id').notNull(),
   couponId: text('coupon_id'),
   discountAmount: doublePrecision('discount_amount').default(0),
+  shippingMethod: text('shipping_method'),
+  shippingFee: doublePrecision('shipping_fee').default(0),
   ...timestamps,
 });
 

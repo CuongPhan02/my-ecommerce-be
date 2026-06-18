@@ -167,4 +167,17 @@ export class SettingService {
   async upsertSystemConfig(data: SystemConfigSchemaType) {
     return await this.repo.upsertSetting(SYSTEM_CONFIG_KEY, data);
   }
+
+  // ─── Shipping Config ──────────────────────────────────────────────────────
+
+  async getShippingConfig() {
+    const setting = await this.repo.getSettingByKey('shipping_config');
+    return setting
+      ? setting.value
+      : { enableShipping: false };
+  }
+
+  async upsertShippingConfig(data: any) {
+    return await this.repo.upsertSetting('shipping_config', data);
+  }
 }

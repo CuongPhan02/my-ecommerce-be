@@ -17,6 +17,7 @@ import { paymentRoutes } from '@/modules/payment/payment.route';
 import { addressRoutes } from '@/modules/address/address.route';
 import { dashboardRoutes } from '@/modules/dashboard/dashboard.route';
 import { volunteerRoutes } from '@/modules/volunteer/volunteer.route';
+import { shippingRoutes } from '@/modules/shipping/shipping.route';
 
 const registerRoutes = (server: FastifyInstance) => {
   server.register(authRoutes, { prefix: '/api/auth' });
@@ -37,6 +38,7 @@ const registerRoutes = (server: FastifyInstance) => {
   server.register(addressRoutes, { prefix: '/api/addresses' });
   server.register(dashboardRoutes, { prefix: '/api/dashboard' });
   server.register(volunteerRoutes, { prefix: '/api/volunteers' });
+  server.register(shippingRoutes, { prefix: '/api/shipping-methods' });
 };
 
 export default registerRoutes;

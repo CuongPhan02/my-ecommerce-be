@@ -9,3 +9,4 @@ export * from './reviews';
 export * from '../_helpers';
 export * from './vouchers';
 export * from './volunteers';
+export * from './shipping';

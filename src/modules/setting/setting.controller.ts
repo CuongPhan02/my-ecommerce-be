@@ -177,5 +177,28 @@ export const settingController = (fastify: any) => {
         return sendResponseError(500, reply, error.message || 'Error updating system config');
       }
     },
+
+    // ─── Shipping Config ────────────────────────────────────────────────────
+
+    getShippingConfigHandler: async (req: FastifyRequest, reply: FastifyReply) => {
+      try {
+        const result = await settingService.getShippingConfig();
+        return sendResponseSuccess(200, reply, 'Get shipping config success', result);
+      } catch (error: any) {
+        return sendResponseError(500, reply, error.message || 'Error getting shipping config');
+      }
+    },
+
+    upsertShippingConfigHandler: async (
+      req: FastifyRequest<{ Body: any }>,
+      reply: FastifyReply
+    ) => {
+      try {
+        const result = await settingService.upsertShippingConfig(req.body);
+        return sendResponseSuccess(200, reply, 'Update shipping config success', result);
+      } catch (error: any) {
+        return sendResponseError(500, reply, error.message || 'Error updating shipping config');
+      }
+    },
   };
 };

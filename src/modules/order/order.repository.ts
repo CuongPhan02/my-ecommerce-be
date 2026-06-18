@@ -64,6 +64,8 @@ export class OrderRepository {
         totalAmount: orders.totalAmount,
         status: orders.status,
         discountAmount: orders.discountAmount,
+        shippingMethod: orders.shippingMethod,
+        shippingFee: orders.shippingFee,
         createdAt: orders.createdAt,
         updatedAt: orders.updatedAt,
         customer: {
@@ -128,6 +130,8 @@ export class OrderRepository {
         totalAmount: orders.totalAmount,
         status: orders.status,
         discountAmount: orders.discountAmount,
+        shippingMethod: orders.shippingMethod,
+        shippingFee: orders.shippingFee,
         couponId: orders.couponId,
         createdAt: orders.createdAt,
         updatedAt: orders.updatedAt,
@@ -257,6 +261,8 @@ export class OrderRepository {
         totalAmount: orders.totalAmount,
         status: orders.status,
         discountAmount: orders.discountAmount,
+        shippingMethod: orders.shippingMethod,
+        shippingFee: orders.shippingFee,
         createdAt: orders.createdAt,
         payment: {
           id: payments.id,
@@ -348,6 +354,20 @@ export class OrderRepository {
     return user?.email;
   }
 
+  // ======= TÌM CẤU HÌNH VẬN CHUYỂN =======
+  async findShippingConfig() {
+    return this.db.query.settings.findFirst({
+      where: eq((await import('@/db/schema/settings')).settings.key, 'shipping_config'),
+    });
+  }
+
+  // ======= TÌM PHƯƠNG THỨC VẬN CHUYỂN =======
+  async findShippingMethodById(id: string) {
+    return this.db.query.shippingMethods.findFirst({
+      where: eq((await import('@/db/schema/shipping')).shippingMethods.id, id),
+    });
+  }
+
   // ======= THỰC THI GIAO DỊCH TẠO ĐƠN HÀNG =======
   async executeOrderTransaction(data: {
     userId: string;
@@ -362,6 +382,8 @@ export class OrderRepository {
       postalCode: string;
       country: string;
     } | undefined;
+    shippingMethod?: string;
+    shippingFee?: number;
     paymentMethod: string;
     items: { productVariantId: string; quantity: number; priceAtPurchase: number }[];
     cartId: string;
@@ -420,6 +442,8 @@ export class OrderRepository {
           discountAmount: data.discountAmount,
           couponId: null, // voucher ID is not compatible with coupon FK, discount is tracked via discountAmount
           shippingAddressId: finalAddressId,
+          shippingMethod: data.shippingMethod,
+          shippingFee: data.shippingFee || 0,
           status: 'PENDING',
         })
         .returning();

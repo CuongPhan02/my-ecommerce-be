@@ -90,3 +90,11 @@ export const systemConfigSchema = z.object({
 });
 
 export type SystemConfigSchemaType = z.infer<typeof systemConfigSchema>;
+
+// ─── Shipping Config ─────────────────────────────────────────────────────────
+
+export const shippingConfigSchema = z.object({
+  enableShipping: z.boolean().default(false),
+});
+
+export type ShippingConfigSchemaType = z.infer<typeof shippingConfigSchema>;

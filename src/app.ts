@@ -96,6 +96,7 @@ export function buildServer() {
     ENV_CONFIG.CLIENT_URL,
     'https://ecommerce-fashion-fe.vercel.app',
     'http://localhost:3000',
+    'http://127.0.0.1:3000',
     /\.vercel\.app$/, // Cho phép tất cả các domain Vercel (bao gồm preview)
   ].filter(Boolean);
 

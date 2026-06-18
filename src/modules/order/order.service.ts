@@ -173,7 +173,26 @@ export class OrderService {
       discountAmount = Math.min(discountAmount, subtotal);
     }
 
-    const totalAmount = Math.max(0, subtotal - discountAmount);
+    // 4.5. Xử lý Vận chuyển (Shipping)
+    let shippingFee = 0;
+    let shippingMethodName = undefined;
+
+    const shippingConfig = await this.repo.findShippingConfig();
+    const isShippingEnabled = shippingConfig?.value?.enableShipping === true;
+
+    if (isShippingEnabled) {
+      if (!data.shippingMethodId) {
+        throw new BadRequestError('Vui lòng chọn phương thức vận chuyển');
+      }
+      const shippingMethod = await this.repo.findShippingMethodById(data.shippingMethodId);
+      if (!shippingMethod || !shippingMethod.isActive) {
+        throw new BadRequestError('Phương thức vận chuyển không hợp lệ hoặc đã bị vô hiệu hóa');
+      }
+      shippingFee = shippingMethod.fee;
+      shippingMethodName = shippingMethod.name;
+    }
+
+    const totalAmount = Math.max(0, subtotal - discountAmount) + shippingFee;
 
     // 5. Thực hiện lưu cơ sở dữ liệu qua database transaction
     const newOrder = await this.repo.executeOrderTransaction({
@@ -183,6 +202,8 @@ export class OrderService {
       couponId,
       shippingAddressId,
       customAddress,
+      shippingMethod: shippingMethodName,
+      shippingFee,
       paymentMethod: data.paymentMethod || 'COD',
       items: orderItemsData,
       cartId: cart.id,
