@@ -289,10 +289,34 @@ URL sản phẩm: https://nude-shop.com/shop/[slug]
 URL đơn hàng: https://nude-shop.com/profile/orders`,
       });
 
-      const geminiHistory = (history || []).map((item) => ({
-        role: item.role,
-        parts: [{ text: item.message }],
-      }));
+      // Gemini requires: history must start with 'user' role and alternate user/model.
+      // Filter out leading 'model' messages (e.g. the welcome message) before passing to API.
+      const rawHistory = history || [];
+      let startIndex = 0;
+      while (startIndex < rawHistory.length && rawHistory[startIndex]!.role !== 'user') {
+        startIndex++;
+      }
+      const validHistory = rawHistory.slice(startIndex);
+
+      // Build paired history: Gemini needs strict user→model→user→model alternation.
+      // Collapse consecutive same-role messages and ensure proper pairing.
+      const pairedHistory: { role: 'user' | 'model'; parts: { text: string }[] }[] = [];
+      for (const item of validHistory) {
+        const last = pairedHistory[pairedHistory.length - 1];
+        if (last && last.role === item.role) {
+          // Merge consecutive same-role messages
+          last.parts[0]!.text += '\n' + item.message;
+        } else {
+          pairedHistory.push({ role: item.role, parts: [{ text: item.message }] });
+        }
+      }
+
+      // Ensure the history ends with 'model' (not 'user'), so the next message is from 'user'
+      if (pairedHistory.length > 0 && pairedHistory[pairedHistory.length - 1]!.role === 'user') {
+        pairedHistory.pop();
+      }
+
+      const geminiHistory = pairedHistory;
 
       const chat = model.startChat({
         history: geminiHistory,
