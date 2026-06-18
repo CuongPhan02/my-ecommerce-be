@@ -273,7 +273,7 @@ export class AIService {
 
     try {
       const model = this.aiInstance.getGenerativeModel({
-        model: 'gemini-1.5-flash', // Free tier: 15 RPM, 1500 RPD
+        model: 'gemini-2.5-flash',
         systemInstruction: `Bạn là trợ lý ảo thời trang NUDE - đại diện của Nude Shop, một cửa hàng thời trang trực tuyến cao cấp.
 
 Nguyên tắc giao tiếp:
