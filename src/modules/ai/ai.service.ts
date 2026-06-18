@@ -273,7 +273,7 @@ export class AIService {
 
     try {
       const model = this.aiInstance.getGenerativeModel({
-        model: 'gemini-2.0-flash',
+        model: 'gemini-1.5-flash', // Free tier: 15 RPM, 1500 RPD
         systemInstruction: `Bạn là trợ lý ảo thời trang NUDE - đại diện của Nude Shop, một cửa hàng thời trang trực tuyến cao cấp.
 
 Nguyên tắc giao tiếp:
@@ -407,7 +407,20 @@ URL đơn hàng: https://nude-shop.com/profile/orders`,
       return aiResponse;
     } catch (error: any) {
       console.error('❌ Lỗi tích hợp Gemini API:', error);
-      throw new BadRequestError(`Có lỗi xảy ra khi trò chuyện với AI: ${error.message}`);
+
+      // Friendly error messages for common cases
+      const errMsg: string = error?.message || '';
+      if (errMsg.includes('429') || errMsg.includes('Too Many Requests') || errMsg.includes('quota')) {
+        throw new BadRequestError(
+          'Hệ thống AI đang quá tải, vui lòng thử lại sau vài giây nhé ạ!'
+        );
+      }
+      if (errMsg.includes('SAFETY') || errMsg.includes('blocked')) {
+        throw new BadRequestError(
+          'Nội dung không phù hợp. Anh/chị vui lòng đặt câu hỏi khác nhé!'
+        );
+      }
+      throw new BadRequestError('Có lỗi xảy ra khi kết nối AI. Vui lòng thử lại sau.');
     }
   }
 
