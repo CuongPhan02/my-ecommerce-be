@@ -21,6 +21,14 @@ import { ProductRepository } from './product.repository';
 export const productController = (fastify: FastifyInstance) => {
   const repo = new ProductRepository(fastify.db);
   const service = new ProductService(repo);
+
+  const cleanQueryParam = (val: any) => {
+    if (val === undefined || val === null) return undefined;
+    const str = String(val).trim();
+    if (str === '' || str === 'null' || str === 'undefined') return undefined;
+    return str;
+  };
+
   return {
     // ===== PRODUCT CONTROLLER ===== //
     createProductHandler: async (
@@ -46,7 +54,7 @@ export const productController = (fastify: FastifyInstance) => {
           attributeValueIds?: string | string[];
           minPrice?: number;
           maxPrice?: number;
-          sort?: 'price_asc' | 'price_desc' | 'newest' | 'oldest';
+          sort?: string;
         };
       }>,
       reply: FastifyReply
@@ -61,31 +69,43 @@ export const productController = (fastify: FastifyInstance) => {
         );
       }
 
+      const search = cleanQueryParam(req.query.search);
+      const categoryId = cleanQueryParam(req.query.categoryId);
+      const brandId = cleanQueryParam(req.query.brandId);
+      const collectionId = cleanQueryParam(req.query.collectionId);
+      const sort = cleanQueryParam(req.query.sort);
+
+      const minPriceVal = cleanQueryParam(req.query.minPrice);
+      const minPrice = minPriceVal ? Number(minPriceVal) : undefined;
+
+      const maxPriceVal = cleanQueryParam(req.query.maxPrice);
+      const maxPrice = maxPriceVal ? Number(maxPriceVal) : undefined;
+
       const rawBrandIds = req.query.brandIds || (req.query as any)['brandIds[]'];
       const brandIds = rawBrandIds
-        ? Array.isArray(rawBrandIds)
-          ? rawBrandIds
-          : [rawBrandIds]
+        ? (Array.isArray(rawBrandIds) ? rawBrandIds : [rawBrandIds])
+            .map(cleanQueryParam)
+            .filter((v): v is string => !!v)
         : undefined;
 
       const rawAttributeValueIds = req.query.attributeValueIds || (req.query as any)['attributeValueIds[]'];
       const attributeValueIds = rawAttributeValueIds
-        ? Array.isArray(rawAttributeValueIds)
-          ? rawAttributeValueIds
-          : [rawAttributeValueIds]
+        ? (Array.isArray(rawAttributeValueIds) ? rawAttributeValueIds : [rawAttributeValueIds])
+            .map(cleanQueryParam)
+            .filter((v): v is string => !!v)
         : undefined;
 
       const result = await service.getAllProducts({
         page: Number(req.query.page),
         limit: Number(req.query.limit),
-        search: req.query.search,
-        categoryId: req.query.categoryId,
-        minPrice: req.query.minPrice ? Number(req.query.minPrice) : undefined,
-        maxPrice: req.query.maxPrice ? Number(req.query.maxPrice) : undefined,
-        sort: req.query.sort,
-        brandId: req.query.brandId,
+        search,
+        categoryId,
+        minPrice,
+        maxPrice,
+        sort: sort as any,
+        brandId,
         brandIds,
-        collectionId: req.query.collectionId,
+        collectionId,
         attributeValueIds,
       });
       return sendResponseSuccess(

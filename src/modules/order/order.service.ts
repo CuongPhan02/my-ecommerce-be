@@ -189,7 +189,30 @@ export class OrderService {
       });
     }
 
-    // 4. Áp dụng mã giảm giá (Coupon) nếu có
+    // 4. Xử lý Vận chuyển (Shipping)
+    let shippingFee = 0;
+    let shippingMethodName = undefined;
+
+    const shippingConfig = await this.repo.findShippingConfig();
+    const isShippingEnabled = shippingConfig?.value?.enableShipping === true;
+
+    if (isShippingEnabled) {
+      if (!data.shippingMethodId) {
+        throw new BadRequestError('Vui lòng chọn phương thức vận chuyển');
+      }
+      const shippingMethod = await this.repo.findShippingMethodById(
+        data.shippingMethodId
+      );
+      if (!shippingMethod || !shippingMethod.isActive) {
+        throw new BadRequestError(
+          'Phương thức vận chuyển không hợp lệ hoặc đã bị vô hiệu hóa'
+        );
+      }
+      shippingFee = shippingMethod.fee;
+      shippingMethodName = shippingMethod.name;
+    }
+
+    // 4.5. Áp dụng mã giảm giá (Coupon) nếu có
     let discountAmount = 0;
     let couponId: string | null = null;
 
@@ -226,33 +249,13 @@ export class OrderService {
         discountAmount = subtotal * (coupon.discountValue / 100);
       } else if (coupon.type === 'FIXED') {
         discountAmount = coupon.discountValue;
+      } else if (coupon.type === 'FREE_SHIPPING') {
+        const maxFreeShipDiscount = coupon.discountValue > 0 ? coupon.discountValue : shippingFee;
+        discountAmount = Math.min(shippingFee, maxFreeShipDiscount);
       }
 
       // Số tiền giảm tối đa không vượt quá giá trị giỏ hàng
       discountAmount = Math.min(discountAmount, subtotal);
-    }
-
-    // 4.5. Xử lý Vận chuyển (Shipping)
-    let shippingFee = 0;
-    let shippingMethodName = undefined;
-
-    const shippingConfig = await this.repo.findShippingConfig();
-    const isShippingEnabled = shippingConfig?.value?.enableShipping === true;
-
-    if (isShippingEnabled) {
-      if (!data.shippingMethodId) {
-        throw new BadRequestError('Vui lòng chọn phương thức vận chuyển');
-      }
-      const shippingMethod = await this.repo.findShippingMethodById(
-        data.shippingMethodId
-      );
-      if (!shippingMethod || !shippingMethod.isActive) {
-        throw new BadRequestError(
-          'Phương thức vận chuyển không hợp lệ hoặc đã bị vô hiệu hóa'
-        );
-      }
-      shippingFee = shippingMethod.fee;
-      shippingMethodName = shippingMethod.name;
     }
 
     const totalAmount = Math.max(0, subtotal - discountAmount) + shippingFee;

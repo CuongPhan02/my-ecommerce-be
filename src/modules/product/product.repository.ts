@@ -509,7 +509,8 @@ export class ProductRepository {
       .where(and(...whereConditions));
 
     // Handle ordering and joins depending on sort type
-    if (sort === 'price_asc' || sort === 'price_desc') {
+    const normalizedSort = sort?.replace('-', '_');
+    if (normalizedSort === 'price_asc' || normalizedSort === 'price_desc') {
       const minPriceSubquery = this.db
         .select({
           productId: productVariants.productId,
@@ -522,11 +523,11 @@ export class ProductRepository {
       matchedProductsQuery
         .leftJoin(minPriceSubquery, eq(products.id, minPriceSubquery.productId))
         .orderBy(
-          sort === 'price_asc'
+          normalizedSort === 'price_asc'
             ? asc(minPriceSubquery.minPrice)
             : desc(minPriceSubquery.minPrice)
         );
-    } else if (sort === 'oldest') {
+    } else if (normalizedSort === 'oldest') {
       matchedProductsQuery.orderBy(asc(products.createdAt));
     } else {
       // default: newest
