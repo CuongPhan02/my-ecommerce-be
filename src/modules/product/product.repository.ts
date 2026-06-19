@@ -23,7 +23,7 @@ import {
   brands,
   productAttributeOptions,
 } from '@/db/schema';
-import { ilike, and, or, isNull, gte, gt, lte, desc, asc, exists } from 'drizzle-orm';
+import { ilike, and, or, isNull, gte, gt, lte, desc, asc, exists, sql } from 'drizzle-orm';
 import { formatVND } from '@/utils/lib';
 
 export interface GetProductsFilter {
@@ -496,6 +496,97 @@ export class ProductRepository {
           ) // Not yet ended or no end date
         )
       );
+    }
+
+    if (sort === 'price_asc' || sort === 'price_desc') {
+      const minPriceSubquery = this.db
+        .select({
+          productId: productVariants.productId,
+          minPrice: sql<number>`min(${productVariants.price})`.as('min_price'),
+        })
+        .from(productVariants)
+        .groupBy(productVariants.productId)
+        .as('p_price');
+
+      const sortedProductIdsQuery = this.db
+        .select({ id: products.id })
+        .from(products)
+        .leftJoin(minPriceSubquery, eq(products.id, minPriceSubquery.productId))
+        .where(and(...whereConditions))
+        .orderBy(
+          sort === 'price_asc'
+            ? asc(minPriceSubquery.minPrice)
+            : desc(minPriceSubquery.minPrice)
+        )
+        .limit(limit)
+        .offset(offset);
+
+      const sortedIdRows = await sortedProductIdsQuery;
+      const sortedIds = sortedIdRows.map((row) => row.id);
+
+      if (sortedIds.length === 0) {
+        return {
+          products: [],
+          total: 0,
+        };
+      }
+
+      const allProducts = await this.db.query.products.findMany({
+        where: inArray(products.id, sortedIds),
+        with: {
+          brand: true,
+          thumbnail: true,
+          metaImage: true,
+          images: {
+            with: {
+              media: true,
+            },
+          },
+          category: true,
+          collections: {
+            with: {
+              collection: true,
+            },
+          },
+          options: {
+            with: {
+              attributeValue: {
+                with: {
+                  attribute: true,
+                },
+              },
+            },
+          },
+          variants: {
+            with: {
+              attributes: {
+                with: {
+                  attributeValue: {
+                    with: {
+                      attribute: true,
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      });
+
+      // Sort in JS memory to match the exact DB sort order of sortedIds
+      const sortedProducts = sortedIds
+        .map((id) => allProducts.find((p) => p.id === id))
+        .filter((p): p is NonNullable<typeof p> => !!p);
+
+      const [total] = await this.db
+        .select({ count: count() })
+        .from(products)
+        .where(and(...whereConditions));
+
+      return {
+        products: sortedProducts.map((p) => this.mapProductOptions(p)),
+        total: total?.count || 0,
+      };
     }
 
     let orderBy;
