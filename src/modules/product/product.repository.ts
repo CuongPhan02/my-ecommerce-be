@@ -9,7 +9,7 @@ import {
   CreateBrandInput,
   UpdateBrandInput,
 } from './product.validate';
-import { eq, inArray, count } from 'drizzle-orm';
+import { eq, inArray, count, avg, sum, ne } from 'drizzle-orm';
 import {
   attributes,
   attributeValues,
@@ -22,6 +22,9 @@ import {
   collections,
   brands,
   productAttributeOptions,
+  reviews,
+  orders,
+  orderItems,
 } from '@/db/schema';
 import { ilike, and, or, isNull, gte, gt, lte, desc, asc, exists, sql } from 'drizzle-orm';
 import { formatVND } from '@/utils/lib';
@@ -100,6 +103,74 @@ export class ProductRepository {
 
     attributeValueCache.set(cacheKey, val.id);
     return val.id;
+  }
+
+  /**
+   * Tính thống kê rating và số bán của sản phẩm từ database
+   * - ratingAverage: điểm trung bình của các review APPROVED (0 nếu chưa có)
+   * - reviewsCount: số lượng review APPROVED
+   * - soldCount: tổng số lượng đã bán (tính các đơn không bị CANCELLED hoặc RETURNED)
+   */
+  private async getProductStats(productIds: string[]): Promise<Map<string, { ratingAverage: number; reviewsCount: number; soldCount: number }>> {
+    if (productIds.length === 0) return new Map();
+
+    // Query 1: Lấy số đánh giá và điểm trung bình từ bảng reviews (chỉ APPROVED)
+    const reviewStats = await this.db
+      .select({
+        productId: reviews.productId,
+        reviewsCount: count(reviews.id),
+        ratingAverage: avg(reviews.rating),
+      })
+      .from(reviews)
+      .where(
+        and(
+          inArray(reviews.productId, productIds),
+          eq(reviews.status, 'APPROVED')
+        )
+      )
+      .groupBy(reviews.productId);
+
+    // Query 2: Lấy số lượng đã bán từ orderItems + orders (trừ CANCELLED và RETURNED)
+    const soldStats = await this.db
+      .select({
+        productId: productVariants.productId,
+        soldCount: sum(orderItems.quantity),
+      })
+      .from(orderItems)
+      .innerJoin(productVariants, eq(orderItems.productVariantId, productVariants.id))
+      .innerJoin(orders, eq(orderItems.orderId, orders.id))
+      .where(
+        and(
+          inArray(productVariants.productId, productIds),
+          ne(orders.status, 'CANCELLED'),
+          ne(orders.status, 'RETURNED' as any),
+        )
+      )
+      .groupBy(productVariants.productId);
+
+    // Gộp kết quả vào Map
+    const statsMap = new Map<string, { ratingAverage: number; reviewsCount: number; soldCount: number }>();
+    for (const id of productIds) {
+      statsMap.set(id, { ratingAverage: 0, reviewsCount: 0, soldCount: 0 });
+    }
+
+    for (const row of reviewStats) {
+      const entry = statsMap.get(row.productId);
+      if (entry) {
+        entry.reviewsCount = Number(row.reviewsCount) || 0;
+        entry.ratingAverage = row.ratingAverage ? Math.round(Number(row.ratingAverage) * 10) / 10 : 0;
+      }
+    }
+
+    for (const row of soldStats) {
+      if (!row.productId) continue;
+      const entry = statsMap.get(row.productId);
+      if (entry) {
+        entry.soldCount = Number(row.soldCount) || 0;
+      }
+    }
+
+    return statsMap;
   }
 
   async findCategoryById(id: string) {
@@ -601,8 +672,16 @@ export class ProductRepository {
       .from(products)
       .where(and(...whereConditions));
 
+    // Lấy thống kê (rating, reviews, sold) cho các sản phẩm đã tìm được
+    const statsMap = await this.getProductStats(matchedIds);
+
     return {
-      products: sortedProducts.map((p) => this.mapProductOptions(p)),
+      products: sortedProducts.map((p) => {
+        const mapped = this.mapProductOptions(p);
+        if (!mapped) return mapped;
+        const stats = statsMap.get(p.id) || { ratingAverage: 0, reviewsCount: 0, soldCount: 0 };
+        return { ...mapped, ...stats };
+      }),
       total: totalRow?.count || 0,
     };
   }
@@ -652,7 +731,14 @@ export class ProductRepository {
     });
     if (!product) return null;
 
-    return this.mapProductOptions(product);
+    const mapped = this.mapProductOptions(product);
+    if (!mapped) return null;
+
+    // Bổ sung thống kê thực tế
+    const statsMap = await this.getProductStats([product.id]);
+    const stats = statsMap.get(product.id) || { ratingAverage: 0, reviewsCount: 0, soldCount: 0 };
+
+    return { ...mapped, ...stats };
   }
 
   async updateProduct(id: string, data: UpdateProductInput) {
