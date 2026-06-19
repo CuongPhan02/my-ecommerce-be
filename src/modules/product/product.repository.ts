@@ -498,6 +498,17 @@ export class ProductRepository {
       );
     }
 
+    // Step 1: ID-First Resolution Query
+    // We first select the IDs and applying filters, ordering, pagination
+    const matchedProductsQuery = this.db
+      .select({ 
+        id: products.id,
+        createdAt: products.createdAt,
+      })
+      .from(products)
+      .where(and(...whereConditions));
+
+    // Handle ordering and joins depending on sort type
     if (sort === 'price_asc' || sort === 'price_desc') {
       const minPriceSubquery = this.db
         .select({
@@ -508,103 +519,36 @@ export class ProductRepository {
         .groupBy(productVariants.productId)
         .as('p_price');
 
-      const sortedProductIdsQuery = this.db
-        .select({ id: products.id })
-        .from(products)
+      matchedProductsQuery
         .leftJoin(minPriceSubquery, eq(products.id, minPriceSubquery.productId))
-        .where(and(...whereConditions))
         .orderBy(
           sort === 'price_asc'
             ? asc(minPriceSubquery.minPrice)
             : desc(minPriceSubquery.minPrice)
-        )
-        .limit(limit)
-        .offset(offset);
+        );
+    } else if (sort === 'oldest') {
+      matchedProductsQuery.orderBy(asc(products.createdAt));
+    } else {
+      // default: newest
+      matchedProductsQuery.orderBy(desc(products.createdAt));
+    }
 
-      const sortedIdRows = await sortedProductIdsQuery;
-      const sortedIds = sortedIdRows.map((row) => row.id);
+    // Apply pagination to ID query
+    matchedProductsQuery.limit(limit).offset(offset);
 
-      if (sortedIds.length === 0) {
-        return {
-          products: [],
-          total: 0,
-        };
-      }
+    const matchedRows = await matchedProductsQuery;
+    const matchedIds = matchedRows.map((row) => row.id);
 
-      const allProducts = await this.db.query.products.findMany({
-        where: inArray(products.id, sortedIds),
-        with: {
-          brand: true,
-          thumbnail: true,
-          metaImage: true,
-          images: {
-            with: {
-              media: true,
-            },
-          },
-          category: true,
-          collections: {
-            with: {
-              collection: true,
-            },
-          },
-          options: {
-            with: {
-              attributeValue: {
-                with: {
-                  attribute: true,
-                },
-              },
-            },
-          },
-          variants: {
-            with: {
-              attributes: {
-                with: {
-                  attributeValue: {
-                    with: {
-                      attribute: true,
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
-      });
-
-      // Sort in JS memory to match the exact DB sort order of sortedIds
-      const sortedProducts = sortedIds
-        .map((id) => allProducts.find((p) => p.id === id))
-        .filter((p): p is NonNullable<typeof p> => !!p);
-
-      const [total] = await this.db
-        .select({ count: count() })
-        .from(products)
-        .where(and(...whereConditions));
-
+    if (matchedIds.length === 0) {
       return {
-        products: sortedProducts.map((p) => this.mapProductOptions(p)),
-        total: total?.count || 0,
+        products: [],
+        total: 0,
       };
     }
 
-    let orderBy;
-    switch (sort) {
-      case 'oldest':
-        orderBy = asc(products.createdAt);
-        break;
-      case 'newest':
-      default:
-        orderBy = desc(products.createdAt);
-        break;
-    }
-
+    // Step 2: Relation Loading for matched IDs
     const allProducts = await this.db.query.products.findMany({
-      limit: limit,
-      offset: offset,
-      where: and(...whereConditions),
-      orderBy: orderBy,
+      where: inArray(products.id, matchedIds),
       with: {
         brand: true,
         thumbnail: true,
@@ -645,14 +589,20 @@ export class ProductRepository {
       },
     });
 
-    const [total] = await this.db
+    // Reorder results in memory to preserve the original sorting order of matchedIds
+    const sortedProducts = matchedIds
+      .map((id) => allProducts.find((p) => p.id === id))
+      .filter((p): p is NonNullable<typeof p> => !!p);
+
+    // Step 3: Get total count using simple query count
+    const [totalRow] = await this.db
       .select({ count: count() })
       .from(products)
       .where(and(...whereConditions));
 
     return {
-      products: allProducts.map((p) => this.mapProductOptions(p)),
-      total: total?.count || 0,
+      products: sortedProducts.map((p) => this.mapProductOptions(p)),
+      total: totalRow?.count || 0,
     };
   }
 
