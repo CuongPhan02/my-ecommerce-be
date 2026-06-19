@@ -145,7 +145,9 @@ export class AIService {
           });
 
           if (!products || products.length === 0) {
-            return JSON.stringify({ message: 'Không có sản phẩm nổi bật nào.' });
+            return JSON.stringify({
+              message: 'Không có sản phẩm nổi bật nào.',
+            });
           }
 
           const result = products.map((p: any) => ({
@@ -165,7 +167,9 @@ export class AIService {
           const vouchers = await this.voucherRepo.getPublicVouchers();
 
           if (!vouchers || vouchers.length === 0) {
-            return JSON.stringify({ message: 'Hiện tại không có mã giảm giá nào đang hoạt động.' });
+            return JSON.stringify({
+              message: 'Hiện tại không có mã giảm giá nào đang hoạt động.',
+            });
           }
 
           const result = vouchers.map((v: any) => ({
@@ -187,7 +191,8 @@ export class AIService {
         case 'get_order_status': {
           if (!userId) {
             return JSON.stringify({
-              error: 'Khách hàng chưa đăng nhập. Vui lòng đăng nhập để tra cứu đơn hàng.',
+              error:
+                'Khách hàng chưa đăng nhập. Vui lòng đăng nhập để tra cứu đơn hàng.',
             });
           }
 
@@ -201,19 +206,30 @@ export class AIService {
 
           if (!order) {
             // Try to list recent orders if orderId might be partial
-            const { orders } = await this.orderRepo.getOrdersByUserId(userId, 1, 5);
+            const { orders } = await this.orderRepo.getOrdersByUserId(
+              userId,
+              1,
+              5
+            );
             if (!orders || orders.length === 0) {
-              return JSON.stringify({ error: `Không tìm thấy đơn hàng #${orderId}. Vui lòng kiểm tra lại mã đơn.` });
+              return JSON.stringify({
+                error: `Không tìm thấy đơn hàng #${orderId}. Vui lòng kiểm tra lại mã đơn.`,
+              });
             }
             const recentOrder = orders[0] as any;
             return JSON.stringify({
               message: `Không tìm thấy đơn #${orderId}. Đơn hàng gần nhất của bạn:`,
               order: {
                 id: recentOrder.id,
-                status: ORDER_STATUS_MAP[recentOrder.status] || recentOrder.status,
+                status:
+                  ORDER_STATUS_MAP[recentOrder.status] || recentOrder.status,
                 totalAmount: recentOrder.totalAmountFormatted,
-                paymentStatus: PAYMENT_STATUS_MAP[recentOrder.payment?.status] || recentOrder.payment?.status,
-                createdAt: new Date(recentOrder.createdAt).toLocaleDateString('vi-VN'),
+                paymentStatus:
+                  PAYMENT_STATUS_MAP[recentOrder.payment?.status] ||
+                  recentOrder.payment?.status,
+                createdAt: new Date(recentOrder.createdAt).toLocaleDateString(
+                  'vi-VN'
+                ),
               },
             });
           }
@@ -224,9 +240,13 @@ export class AIService {
               id: orderData.id,
               status: ORDER_STATUS_MAP[orderData.status] || orderData.status,
               totalAmount: orderData.totalAmountFormatted,
-              paymentStatus: PAYMENT_STATUS_MAP[orderData.payment?.status] || orderData.payment?.status,
+              paymentStatus:
+                PAYMENT_STATUS_MAP[orderData.payment?.status] ||
+                orderData.payment?.status,
               shippingMethod: orderData.shippingMethod,
-              createdAt: new Date(orderData.createdAt).toLocaleDateString('vi-VN'),
+              createdAt: new Date(orderData.createdAt).toLocaleDateString(
+                'vi-VN'
+              ),
               itemCount: orderData.items?.length || 0,
             },
           });
@@ -234,7 +254,8 @@ export class AIService {
 
         case 'search_products_by_name': {
           const keyword = args.keyword?.trim();
-          if (!keyword) return JSON.stringify({ message: 'Vui lòng cung cấp từ khóa.' });
+          if (!keyword)
+            return JSON.stringify({ message: 'Vui lòng cung cấp từ khóa.' });
 
           const { products } = await this.productRepo.getAllProducts({
             page: 1,
@@ -243,7 +264,9 @@ export class AIService {
           });
 
           if (!products || products.length === 0) {
-            return JSON.stringify({ message: `Không tìm thấy sản phẩm nào với từ khóa "${keyword}".` });
+            return JSON.stringify({
+              message: `Không tìm thấy sản phẩm nào với từ khóa "${keyword}".`,
+            });
           }
 
           const result = products.map((p: any) => ({
@@ -259,11 +282,15 @@ export class AIService {
         }
 
         default:
-          return JSON.stringify({ error: `Tool "${name}" không được nhận dạng.` });
+          return JSON.stringify({
+            error: `Tool "${name}" không được nhận dạng.`,
+          });
       }
     } catch (err: any) {
       console.error(`❌ Tool "${name}" error:`, err?.message);
-      return JSON.stringify({ error: `Lỗi khi thực hiện "${name}": ${err?.message}` });
+      return JSON.stringify({
+        error: `Lỗi khi thực hiện "${name}": ${err?.message}`,
+      });
     }
   }
 
@@ -273,7 +300,7 @@ export class AIService {
 
     try {
       const model = this.aiInstance.getGenerativeModel({
-        model: 'gemini-2.5-flash',
+        model: 'gemini-3.1-flash-lite',
         systemInstruction: `Bạn là trợ lý ảo thời trang NUDE - đại diện của Nude Shop, một cửa hàng thời trang trực tuyến cao cấp.
 
 Nguyên tắc giao tiếp:
@@ -293,26 +320,38 @@ URL đơn hàng: https://nude-shop.com/profile/orders`,
       // Filter out leading 'model' messages (e.g. the welcome message) before passing to API.
       const rawHistory = history || [];
       let startIndex = 0;
-      while (startIndex < rawHistory.length && rawHistory[startIndex]!.role !== 'user') {
+      while (
+        startIndex < rawHistory.length &&
+        rawHistory[startIndex]!.role !== 'user'
+      ) {
         startIndex++;
       }
       const validHistory = rawHistory.slice(startIndex);
 
       // Build paired history: Gemini needs strict user→model→user→model alternation.
       // Collapse consecutive same-role messages and ensure proper pairing.
-      const pairedHistory: { role: 'user' | 'model'; parts: { text: string }[] }[] = [];
+      const pairedHistory: {
+        role: 'user' | 'model';
+        parts: { text: string }[];
+      }[] = [];
       for (const item of validHistory) {
         const last = pairedHistory[pairedHistory.length - 1];
         if (last && last.role === item.role) {
           // Merge consecutive same-role messages
           last.parts[0]!.text += '\n' + item.message;
         } else {
-          pairedHistory.push({ role: item.role, parts: [{ text: item.message }] });
+          pairedHistory.push({
+            role: item.role,
+            parts: [{ text: item.message }],
+          });
         }
       }
 
       // Ensure the history ends with 'model' (not 'user'), so the next message is from 'user'
-      if (pairedHistory.length > 0 && pairedHistory[pairedHistory.length - 1]!.role === 'user') {
+      if (
+        pairedHistory.length > 0 &&
+        pairedHistory[pairedHistory.length - 1]!.role === 'user'
+      ) {
         pairedHistory.pop();
       }
 
@@ -334,7 +373,9 @@ URL đơn hàng: https://nude-shop.com/profile/orders`,
           },
         });
         messageParts.push({
-          text: message || 'Hãy phân tích trang phục trong ảnh và gợi ý sản phẩm tương tự trên Nude Shop.',
+          text:
+            message ||
+            'Hãy phân tích trang phục trong ảnh và gợi ý sản phẩm tương tự trên Nude Shop.',
         });
       } else {
         messageParts.push({ text: message });
@@ -364,8 +405,15 @@ URL đơn hàng: https://nude-shop.com/profile/orders`,
           const { name, args } = part.functionCall!;
           console.log(`🤖 AI calling tool: ${name}`, args);
 
-          const toolResult = await this.executeToolCall(name, args as Record<string, any>, userId);
-          console.log(`✅ Tool result for ${name}:`, toolResult.substring(0, 200));
+          const toolResult = await this.executeToolCall(
+            name,
+            args as Record<string, any>,
+            userId
+          );
+          console.log(
+            `✅ Tool result for ${name}:`,
+            toolResult.substring(0, 200)
+          );
 
           functionResponses.push({
             functionResponse: {
@@ -391,7 +439,9 @@ URL đơn hàng: https://nude-shop.com/profile/orders`,
 
       // Extract product/voucher data from the last tool executions to pass to FE
       const allParts = result.response.candidates?.[0]?.content?.parts || [];
-      for (const part of (history || [])) { void part; } // type guard
+      for (const part of history || []) {
+        void part;
+      } // type guard
 
       // Re-collect products/vouchers from the conversation context
       const { products: extractedProducts, vouchers: extractedVouchers } =
@@ -410,7 +460,11 @@ URL đơn hàng: https://nude-shop.com/profile/orders`,
 
       // Friendly error messages for common cases
       const errMsg: string = error?.message || '';
-      if (errMsg.includes('429') || errMsg.includes('Too Many Requests') || errMsg.includes('quota')) {
+      if (
+        errMsg.includes('429') ||
+        errMsg.includes('Too Many Requests') ||
+        errMsg.includes('quota')
+      ) {
         throw new BadRequestError(
           'Hệ thống AI đang quá tải, vui lòng thử lại sau vài giây nhé ạ!'
         );
@@ -420,7 +474,9 @@ URL đơn hàng: https://nude-shop.com/profile/orders`,
           'Nội dung không phù hợp. Anh/chị vui lòng đặt câu hỏi khác nhé!'
         );
       }
-      throw new BadRequestError('Có lỗi xảy ra khi kết nối AI. Vui lòng thử lại sau.');
+      throw new BadRequestError(
+        'Có lỗi xảy ra khi kết nối AI. Vui lòng thử lại sau.'
+      );
     }
   }
 
@@ -430,7 +486,8 @@ URL đơn hàng: https://nude-shop.com/profile/orders`,
     userId?: string
   ): Promise<{ products?: AIProductCard[]; vouchers?: AIVoucherChip[] }> {
     const msg = message.toLowerCase();
-    const result: { products?: AIProductCard[]; vouchers?: AIVoucherChip[] } = {};
+    const result: { products?: AIProductCard[]; vouchers?: AIVoucherChip[] } =
+      {};
 
     const isProductQuery =
       msg.includes('sản phẩm') ||
@@ -469,7 +526,9 @@ URL đơn hàng: https://nude-shop.com/profile/orders`,
             price: p.variants?.[0]?.priceFormatted || 'Liên hệ',
             thumbnail: p.thumbnail?.url || null,
           }));
-      } catch { /* skip */ }
+      } catch {
+        /* skip */
+      }
     }
 
     if (isVoucherQuery) {
@@ -486,7 +545,9 @@ URL đơn hàng: https://nude-shop.com/profile/orders`,
             minOrder: v.minOrderValueFormatted || '0đ',
             description: v.description || '',
           }));
-      } catch { /* skip */ }
+      } catch {
+        /* skip */
+      }
     }
 
     return result;
